@@ -21,7 +21,7 @@ def test_find_path():
         {
             'start': (1, 1),
             'goal': (1, 1),
-            "obstacles": {},
+            "obstacles": set(),
             "expected_return": [(1, 1)],
         },
         {

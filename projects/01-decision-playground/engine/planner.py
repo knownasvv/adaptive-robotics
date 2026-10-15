@@ -17,12 +17,12 @@ def get_neighbors(
 ) -> list[tuple[int, int]]:
     width, height = grid
     x, y = position
-    candidate_neighbors: set[tuple[int, int]] = {
+    candidate_neighbors: list[tuple[int, int]] = [
         (x,     y - 1), # up
         (x,     y + 1), # down
         (x - 1, y),     # left
         (x + 1, y),     # right
-    }
+    ]
     valid_neighbors: list[tuple[int, int]] = []
     for neighbor in candidate_neighbors:
         neighbor_x, neighbor_y = neighbor
