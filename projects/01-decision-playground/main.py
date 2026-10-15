@@ -21,8 +21,8 @@ class StepOutcome(Enum):
 
 @dataclass
 class Point:
-    x: float
-    y: float
+    x: int
+    y: int
 
 
 @dataclass
@@ -67,7 +67,6 @@ def step(
     return StepOutput(candidate_position, outcome)
 
 
-# Grid is 4x3, starting at (1, 1) with one obstacle (2,1)
 if __name__ == '__main__':
 
     #               x
@@ -110,24 +109,6 @@ if __name__ == '__main__':
         print(f'Tick {i}: after {action.name}, output: {output}')
         try:
             assert output == expected_output
-        except AssertionError:
+        except AssertionError as ex:
             print(f'   Assertion failed, expected output: {expected_output}')
-            raise AssertionError
-
-
-# Expected:
-# | Tick | Action  | Before | After  | Outcome       |
-# |------|---------|--------|--------|---------------|
-# | 1    | RIGHT   | (1, 1) | (1, 1) | BLOCKED       | move into obstacle
-# | 2    | DOWN    | (1, 1) | (1, 2) | MOVED         | move into a free cell
-# | 3    | DOWN    | (1, 2) | (1, 2) | OUT_OF_BOUNDS | move down from the bottom edge
-# | 4    | WAIT    | (1, 2) | (1, 2) | WAITED        | wait in a valid cell
-# | 5    | LEFT    | (1, 2) | (0, 2) | MOVED         | 
-# | 6    | LEFT    | (0, 2) | (0, 2) | OUT_OF_BOUNDS | move left from the left edge
-# | 8    | RIGHT   | (0, 2) | (1, 2) | MOVED         |
-# | 9    | RIGHT   | (1, 2) | (2, 2) | MOVED         |
-# | 10   | RIGHT   | (2, 2) | (3, 2) | MOVED         |
-# | 11   | RIGHT   | (3, 2) | (3, 2) | OUT_OF_BOUNDS | move right from the right edge
-# | 12   | UP      | (3, 2) | (3, 1) | MOVED         | 
-# | 13   | UP      | (3, 1) | (3, 0) | MOVED         |
-# | 14   | UP      | (3, 0) | (3, 0) | OUT_OF_BOUNDS | move up from the top edge
+            raise ex
