@@ -10,67 +10,42 @@ def test_find_path():
     print(f'\n================= test_find_path() =================')
 
     grid = (4, 3)
-    start = (1, 1)
-    goal = (3, 1)
-    obstacles = {(2, 1)}
 
-    expected_result = [
+    cases = [
         {
-            "cell_removed": (1, 1),
-            "new_neighbors": {(1, 0), (1, 2), (0, 1)},
-            "updated_queue": {(1, 0), (1, 2), (0, 1)},
+            "start": (1, 1),
+            "goal": (3, 1),
+            "obstacles": {(2, 1)},
+            "expected_return": [(1, 1), (1, 0), (2, 0), (3, 0), (3, 1)],
         },
         {
-            "cell_removed": (1, 0),
-            "new_neighbors": {(0, 0), (2, 0)},
-            "updated_queue": {(1, 2), (0, 1), (0, 0), (2, 0)},
+            'start': (1, 1),
+            'goal': (1, 1),
+            "obstacles": {},
+            "expected_return": [(1, 1)],
         },
         {
-            "cell_removed": (1, 2),
-            "new_neighbors": {(2, 2)},
-            "updated_queue": {(0, 1), (0, 0), (2, 0), (2, 2)},
-        },
-        {
-            "cell_removed": (0, 1),
-            "new_neighbors": {(0, 2)},
-            "updated_queue": {(0, 0), (2, 0), (2, 2), (0, 2)},
-        },
-        {
-            "cell_removed": (0, 0),
-            "new_neighbors": set(),
-            "updated_queue": {(2, 0), (2, 2), (0, 2)},
-        },
-        {
-            "cell_removed": (2, 0),
-            "new_neighbors": set(),
-            "updated_queue": {(2, 2), (0, 2)},
-        },
-        {
-            "cell_removed": (2, 2),
-            "new_neighbors": {(2, 3)},
-            "updated_queue": {(0, 2), (2, 3)},
-        },
-        {
-            "cell_removed": (0, 2),
-            "new_neighbors": {(0, 3)},
-            "updated_queue": {(2, 3), (0, 3)},
-        },
-        {
-            "cell_removed": (2, 3),
-            "new_neighbors": {(1, 3)},
-            "updated_queue": {(0, 3), (1, 3)},
-        },
-        {"cell_removed": (0, 3), "new_neighbors": set(), "updated_queue": {(1, 3)}},
-        {"cell_removed": (1, 3), "new_neighbors": set(), "updated_queue": set()},
+            'start': (1, 1),
+            'goal': (3, 1),
+            'obstacles': {(1, 0), (1, 2), (0, 1), (2, 1)},
+            'expected_return': None
+        }
     ]
 
-    path = find_path(
-        grid=grid,
-        obstacles=obstacles,
-        start=start,
-        goal=goal
-    )
-    print(f'returned path: {path}')
+    for case in cases:
+        start = case['start']
+        goal = case['goal']
+        obstacles = case['obstacles']
+        expected_return = case['expected_return']
+        
+        path = find_path(
+            grid=grid,
+            obstacles=obstacles,
+            start=start,
+            goal=goal
+        )
+        print(f'returned path: {path}')
+        assert path == expected_return
 
 
 def test_get_neighbors():

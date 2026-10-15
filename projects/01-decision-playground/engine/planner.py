@@ -36,7 +36,7 @@ def get_neighbors(
     return valid_neighbors
 
 
-def _reconstruct_path(came_from, goal) -> set[tuple[int, int]]:
+def _reconstruct_path(came_from, goal) -> list[tuple[int, int]]:
     path = deque([goal])
     cursor = came_from[goal]
     
@@ -45,7 +45,7 @@ def _reconstruct_path(came_from, goal) -> set[tuple[int, int]]:
         cursor = came_from[cursor]
     
     path.reverse()
-    return path
+    return list(path)
         
 
 # Search those connections and return a path
@@ -54,9 +54,8 @@ def find_path(
     obstacles: set[tuple[int, int]],
     start: tuple[int, int],
     goal: tuple[int, int]
-) -> set[tuple[int, int]] | None:
+) -> list[tuple[int, int]] | None:
     frontier = deque([start])
-    tracked_neighbors = []
     came_from: dict[
         tuple[int, int], 
         tuple[int, int] | None
@@ -64,7 +63,6 @@ def find_path(
     
     while frontier:
         current = frontier.popleft()
-        tracked_neighbors.append(current)
         
         if current == goal:
             return _reconstruct_path(came_from, goal)
@@ -74,8 +72,7 @@ def find_path(
             obstacles=obstacles,
             position=current
         )
-        new_neighbors = [neighbor for neighbor in neighbors if neighbors not in tracked_neighbors]
-        for neighbor in new_neighbors: 
+        for neighbor in neighbors: 
             if neighbor in came_from:
                 continue
             
