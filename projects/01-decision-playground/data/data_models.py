@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from models import StepOutcome
+from .models import StepOutcome
 
 
 @dataclass
