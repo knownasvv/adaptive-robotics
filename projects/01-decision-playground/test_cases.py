@@ -9,7 +9,7 @@ from engine.runner import step, choose_action
 def test_find_path():
     print(f'\n================= test_find_path() =================')
 
-    grid = (3, 4)
+    grid = (4, 3)
     start = (1, 1)
     goal = (3, 1)
     obstacles = {(2, 1)}
@@ -64,12 +64,13 @@ def test_find_path():
         {"cell_removed": (1, 3), "new_neighbors": set(), "updated_queue": set()},
     ]
 
-    find_path(
+    path = find_path(
         grid=grid,
         obstacles=obstacles,
         start=start,
         goal=goal
     )
+    print(f'returned path: {path}')
 
 
 def test_get_neighbors():
@@ -81,19 +82,19 @@ def test_get_neighbors():
         { # 1. Exclude an occupied neighbor
             'position': (1, 1),
             'obstacles': {(2, 1)},
-            'expected_neighbors': {(1, 0), (1, 2), (0, 1)}
+            'expected_neighbors': [(1, 0), (1, 2), (0, 1)]
         }, { # 2. Exclude candidates beyond two boundaries
             'position': (0, 0),
             'obstacles': set(),
-            'expected_neighbors': {(0, 1), (1, 0)}
+            'expected_neighbors': [(0, 1), (1, 0)]
         }, { # 3. Exclude the opposite corner
             'position': (3, 2),
             'obstacles': set(),
-            'expected_neighbors': {(3, 1), (2, 2)}
+            'expected_neighbors': [(3, 1), (2, 2)]
         }, { # 4. A completely enclosed position
             'position': (1, 1),
             'obstacles': {(1, 0), (1, 2), (0, 1), (2, 1)},
-            'expected_neighbors': set()
+            'expected_neighbors': []
         }
     ]
 

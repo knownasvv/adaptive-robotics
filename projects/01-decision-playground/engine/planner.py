@@ -14,7 +14,7 @@ def get_neighbors(
     grid: tuple[int, int],
     obstacles: set[tuple[int, int]],
     position: tuple[int, int]
-) -> set[tuple[int, int]]:
+) -> list[tuple[int, int]]:
     width, height = grid
     x, y = position
     candidate_neighbors: set[tuple[int, int]] = {
@@ -23,7 +23,7 @@ def get_neighbors(
         (x - 1, y),     # left
         (x + 1, y),     # right
     }
-    valid_neighbors: set[tuple[int, int]] = set()
+    valid_neighbors: list[tuple[int, int]] = []
     for neighbor in candidate_neighbors:
         neighbor_x, neighbor_y = neighbor
         if (neighbor not in obstacles
@@ -31,9 +31,22 @@ def get_neighbors(
             and neighbor_y >= 0
             and neighbor_x < width
             and neighbor_y < height):
-            valid_neighbors.add(neighbor)
+            valid_neighbors.append(neighbor)
 
     return valid_neighbors
+
+
+def _reconstruct_path(came_from, goal) -> set[tuple[int, int]]:
+    path = deque([goal])
+    cursor = came_from[goal]
+    
+    while cursor is not None:
+        path.append(cursor)
+        cursor = came_from[cursor]
+    
+    path.reverse()
+    return path
+        
 
 # Search those connections and return a path
 def find_path(
@@ -42,4 +55,31 @@ def find_path(
     start: tuple[int, int],
     goal: tuple[int, int]
 ) -> set[tuple[int, int]] | None:
-    raise NotImplementedError
+    frontier = deque([start])
+    tracked_neighbors = []
+    came_from: dict[
+        tuple[int, int], 
+        tuple[int, int] | None
+    ] = { start: None }
+    
+    while frontier:
+        current = frontier.popleft()
+        tracked_neighbors.append(current)
+        
+        if current == goal:
+            return _reconstruct_path(came_from, goal)
+        
+        neighbors = get_neighbors(
+            grid=grid,
+            obstacles=obstacles,
+            position=current
+        )
+        new_neighbors = [neighbor for neighbor in neighbors if neighbors not in tracked_neighbors]
+        for neighbor in new_neighbors: 
+            if neighbor in came_from:
+                continue
+            
+            came_from[neighbor] = current
+            frontier.append(neighbor)
+    
+    return None
