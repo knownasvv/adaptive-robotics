@@ -6,28 +6,24 @@
 #   3. It is not occupied.
 # * There are no diagonal connections
 
-# Requirements:
-# - Consider candidates in this fixed order: UP, DOWN, LEFT, RIGHT.
-# - Return only allowed positions, preserving that order.
-# - Return an empty list when no movement is possible.
-# - Do not include the starting position.
-# - Do not modify the input position or obstacles.
-# - Do not choose a route or consider the goal yet.
-# - Assume the input position is valid and unoccupied.
+from collections import deque
+
+
+# Return the allowed connections from one cell
 def get_neighbors(
     grid: tuple[int, int],
-    obstacles: list[tuple[int, int]],
+    obstacles: set[tuple[int, int]],
     position: tuple[int, int]
-) -> list[tuple[int, int]]:
+) -> set[tuple[int, int]]:
     width, height = grid
     x, y = position
-    candidate_neighbors: list[tuple[int, int]] = [
-        (x, y - 1), # up
-        (x, y + 1), # down
-        (x - 1, y), # left
-        (x + 1, y), # right
-    ]
-    valid_neighbors: list[tuple[int, int]] = []
+    candidate_neighbors: set[tuple[int, int]] = {
+        (x,     y - 1), # up
+        (x,     y + 1), # down
+        (x - 1, y),     # left
+        (x + 1, y),     # right
+    }
+    valid_neighbors: set[tuple[int, int]] = set()
     for neighbor in candidate_neighbors:
         neighbor_x, neighbor_y = neighbor
         if (neighbor not in obstacles
@@ -35,6 +31,15 @@ def get_neighbors(
             and neighbor_y >= 0
             and neighbor_x < width
             and neighbor_y < height):
-            valid_neighbors.append(neighbor)
+            valid_neighbors.add(neighbor)
 
     return valid_neighbors
+
+# Search those connections and return a path
+def find_path(
+    grid: tuple[int, int],
+    obstacles: set[tuple[int, int]],
+    start: tuple[int, int],
+    goal: tuple[int, int]
+) -> set[tuple[int, int]] | None:
+    raise NotImplementedError

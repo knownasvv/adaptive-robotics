@@ -1,4 +1,4 @@
-from test_cases import test_step, test_choose_action, test_get_neighbors
+from test_cases import test_step, test_choose_action, test_get_neighbors, test_find_path
     
 
 if __name__ == '__main__':
@@ -13,3 +13,4 @@ if __name__ == '__main__':
     test_step()
     test_choose_action()
     test_get_neighbors()
+    # test_find_path()

@@ -1,11 +1,77 @@
 from data.data_models import StepOutput
 from data.models import StepAction, StepOutcome, StoppingReason
 
-from engine.planner import get_neighbors
+from engine.planner import get_neighbors, find_path
 from engine.runner import step, choose_action
 
 
 # planner
+def test_find_path():
+    print(f'\n================= test_find_path() =================')
+
+    grid = (3, 4)
+    start = (1, 1)
+    goal = (3, 1)
+    obstacles = {(2, 1)}
+
+    expected_result = [
+        {
+            "cell_removed": (1, 1),
+            "new_neighbors": {(1, 0), (1, 2), (0, 1)},
+            "updated_queue": {(1, 0), (1, 2), (0, 1)},
+        },
+        {
+            "cell_removed": (1, 0),
+            "new_neighbors": {(0, 0), (2, 0)},
+            "updated_queue": {(1, 2), (0, 1), (0, 0), (2, 0)},
+        },
+        {
+            "cell_removed": (1, 2),
+            "new_neighbors": {(2, 2)},
+            "updated_queue": {(0, 1), (0, 0), (2, 0), (2, 2)},
+        },
+        {
+            "cell_removed": (0, 1),
+            "new_neighbors": {(0, 2)},
+            "updated_queue": {(0, 0), (2, 0), (2, 2), (0, 2)},
+        },
+        {
+            "cell_removed": (0, 0),
+            "new_neighbors": set(),
+            "updated_queue": {(2, 0), (2, 2), (0, 2)},
+        },
+        {
+            "cell_removed": (2, 0),
+            "new_neighbors": set(),
+            "updated_queue": {(2, 2), (0, 2)},
+        },
+        {
+            "cell_removed": (2, 2),
+            "new_neighbors": {(2, 3)},
+            "updated_queue": {(0, 2), (2, 3)},
+        },
+        {
+            "cell_removed": (0, 2),
+            "new_neighbors": {(0, 3)},
+            "updated_queue": {(2, 3), (0, 3)},
+        },
+        {
+            "cell_removed": (2, 3),
+            "new_neighbors": {(1, 3)},
+            "updated_queue": {(0, 3), (1, 3)},
+        },
+        {"cell_removed": (0, 3), "new_neighbors": set(), "updated_queue": {(1, 3)}},
+        {"cell_removed": (1, 3), "new_neighbors": set(), "updated_queue": set()},
+    ]
+
+    find_path(
+        grid=grid,
+        obstacles=obstacles,
+        start=start,
+        goal=goal
+    )
+
+
 def test_get_neighbors():
     print(f'\n================= test_get_neighbors() =================')
 
@@ -14,20 +80,20 @@ def test_get_neighbors():
     cases = [
         { # 1. Exclude an occupied neighbor
             'position': (1, 1),
-            'obstacles': [(2, 1)],
-            'expected_neighbors': [(1, 0), (1, 2), (0, 1)]
+            'obstacles': {(2, 1)},
+            'expected_neighbors': {(1, 0), (1, 2), (0, 1)}
         }, { # 2. Exclude candidates beyond two boundaries
             'position': (0, 0),
-            'obstacles': [],
-            'expected_neighbors': [(0, 1), (1, 0)]
+            'obstacles': set(),
+            'expected_neighbors': {(0, 1), (1, 0)}
         }, { # 3. Exclude the opposite corner
             'position': (3, 2),
-            'obstacles': [],
-            'expected_neighbors': [(3, 1), (2, 2)]
+            'obstacles': set(),
+            'expected_neighbors': {(3, 1), (2, 2)}
         }, { # 4. A completely enclosed position
             'position': (1, 1),
-            'obstacles': [(1, 0), (1, 2), (0, 1), (2, 1)],
-            'expected_neighbors': []
+            'obstacles': {(1, 0), (1, 2), (0, 1), (2, 1)},
+            'expected_neighbors': set()
         }
     ]
 
@@ -45,7 +111,7 @@ def test_get_neighbors():
             obstacles=obstacles,
             position=position
         )
-        print(f'  neighbors: {neighbors}')
+        print(f'  neighbors: {neighbors}, expected neighbors: {expected_neighbors}')
         assert neighbors == expected_neighbors
         assert position == original_position
         assert obstacles == original_obstacles
@@ -57,7 +123,7 @@ def test_step():
     print(f'\n================= test_step() =================')
 
     grid = (4, 3)
-    obstacles = [(2, 1)]
+    obstacles = {(2, 1)}
     position = (1, 1)
 
     cases = [
@@ -103,11 +169,48 @@ def test_choose_action():
 
     grid = (4, 3)
     cases = [
-        { 'start': (0, 0), 'goal': (3, 2), 'obstacles': [], 'expected_step_count': 5, 'expected_stopping_reason': StoppingReason.GOAL_REACHED, 'final_position': (3, 2), 'step_count_budget': 5 },
-        { 'start': (0, 0), 'goal': (3, 2), 'obstacles': [], 'expected_step_count': 4, 'expected_stopping_reason': StoppingReason.STEP_LIMIT, 'final_position': (3, 1), 'step_count_budget': 4 },
-        { 'start': (3, 2), 'goal': (3, 2), 'obstacles': [], 'expected_step_count': 0, 'expected_stopping_reason': StoppingReason.GOAL_REACHED, 'final_position': (3, 2) },
-        { 'start': (1, 1), 'goal': (3, 1), 'obstacles': [(2, 1)], 'expected_step_count': 10, 'expected_stopping_reason': StoppingReason.STEP_LIMIT, 'final_position': (1, 1) },
-        { 'start': (3, 2), 'goal': (0, 0), 'obstacles': [], 'expected_step_count': 5, 'expected_stopping_reason': StoppingReason.GOAL_REACHED, 'final_position': (0, 0) },
+        {
+            "start": (0, 0),
+            "goal": (3, 2),
+            "obstacles": set(),
+            "expected_step_count": 5,
+            "expected_stopping_reason": StoppingReason.GOAL_REACHED,
+            "final_position": (3, 2),
+            "step_count_budget": 5,
+        },
+        {
+            "start": (0, 0),
+            "goal": (3, 2),
+            "obstacles": set(),
+            "expected_step_count": 4,
+            "expected_stopping_reason": StoppingReason.STEP_LIMIT,
+            "final_position": (3, 1),
+            "step_count_budget": 4,
+        },
+        {
+            "start": (3, 2),
+            "goal": (3, 2),
+            "obstacles": set(),
+            "expected_step_count": 0,
+            "expected_stopping_reason": StoppingReason.GOAL_REACHED,
+            "final_position": (3, 2),
+        },
+        {
+            "start": (1, 1),
+            "goal": (3, 1),
+            "obstacles": {(2, 1)},
+            "expected_step_count": 10,
+            "expected_stopping_reason": StoppingReason.STEP_LIMIT,
+            "final_position": (1, 1),
+        },
+        {
+            "start": (3, 2),
+            "goal": (0, 0),
+            "obstacles": set(),
+            "expected_step_count": 5,
+            "expected_stopping_reason": StoppingReason.GOAL_REACHED,
+            "final_position": (0, 0),
+        },
     ]
 
     for index, case in enumerate(cases):
