@@ -5,17 +5,17 @@ from dataclasses import dataclass
 
 
 class StepAction(Enum):
-    UP = 1,
-    DOWN = 2,
-    LEFT = 3,
-    RIGHT = 4,
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
     WAIT = 5
 
 
 class StepOutcome(Enum):
-    MOVED = 1,
-    BLOCKED = 2,
-    OUT_OF_BOUNDS = 3,
+    MOVED = 1
+    BLOCKED = 2
+    OUT_OF_BOUNDS = 3
     WAITED = 4
 
 
@@ -31,7 +31,7 @@ class StepOutput:
     outcome: StepOutcome
 
 
-def get_outcome(grid: Point, obstacles: set[Point], position: Point, action: StepAction) -> StepOutcome:
+def get_outcome(grid: Point, obstacles: list[Point], position: Point, action: StepAction) -> StepOutcome:
     if action == StepAction.WAIT:
         return StepOutcome.WAITED
 
@@ -46,25 +46,25 @@ def get_outcome(grid: Point, obstacles: set[Point], position: Point, action: Ste
 
 def step(
     grid: Point,
-    obstacles: set[Point], 
+    obstacles: list[Point], 
     current_position: Point, 
     action: StepAction
 ) -> StepOutput:
-    final_position = copy.copy(current_position)
+    candidate_position = copy.copy(current_position)
     if action == StepAction.UP:
-        final_position.y -= 1
+        candidate_position.y -= 1
     elif action == StepAction.DOWN:
-        final_position.y += 1
+        candidate_position.y += 1
     elif action == StepAction.LEFT:
-        final_position.x -= 1
+        candidate_position.x -= 1
     elif action == StepAction.RIGHT:
-        final_position.x += 1
+        candidate_position.x += 1
 
-    outcome = get_outcome(grid, obstacles, final_position, action)
+    outcome = get_outcome(grid, obstacles, candidate_position, action)
     if outcome in [StepOutcome.OUT_OF_BOUNDS, StepOutcome.BLOCKED]:
-        final_position = current_position
+        candidate_position = current_position
 
-    return StepOutput(final_position, outcome)
+    return StepOutput(candidate_position, outcome)
 
 
 # Grid is 4x3, starting at (1, 1) with one obstacle (2,1)
@@ -112,6 +112,7 @@ if __name__ == '__main__':
             assert output == expected_output
         except AssertionError:
             print(f'   Assertion failed, expected output: {expected_output}')
+            raise AssertionError
 
 
 # Expected:
