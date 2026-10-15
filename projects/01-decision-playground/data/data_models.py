@@ -3,12 +3,6 @@ from .models import StepOutcome
 
 
 @dataclass
-class Point:
-    x: int
-    y: int
-
-
-@dataclass
 class StepOutput:
-    position: Point
+    position: tuple[int, int]
     outcome: StepOutcome
