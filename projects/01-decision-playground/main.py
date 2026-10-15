@@ -41,22 +41,6 @@ def step(
     return StepOutput(candidate_position, outcome)
 
 
-# Policy
-def choose_action(
-    current_position: Point,
-    goal: Point,
-) -> StepAction:
-    if current_position.x < goal.x:
-        return StepAction.RIGHT
-    elif current_position.x > goal.x:
-        return StepAction.LEFT
-    elif current_position.y < goal.y:
-        return StepAction.DOWN
-    elif current_position.y > goal.y:
-        return StepAction.UP
-    return StepAction.WAIT
-
-
 def _test_steps(): 
     grid = Point(4, 3)
     obstacles = [Point(2, 1)]
@@ -100,10 +84,21 @@ def _test_steps():
             raise ex
     
 
-    
-def calculate_distance(current_position, goal) -> int:
-    return abs(goal.x - current_position.x) + abs(goal.y - current_position.y)
 
+# Policy
+def choose_action(
+    current_position: Point,
+    goal: Point,
+) -> StepAction:
+    if current_position.x < goal.x:
+        return StepAction.RIGHT
+    elif current_position.x > goal.x:
+        return StepAction.LEFT
+    elif current_position.y < goal.y:
+        return StepAction.DOWN
+    elif current_position.y > goal.y:
+        return StepAction.UP
+    return StepAction.WAIT
 
 def _test_choose_action():
     grid = Point(4, 3)
@@ -127,8 +122,9 @@ def _test_choose_action():
             current_position = output.position
             
             step_count += 1
+            distance = abs(goal.x - current_position.x) + abs(goal.y - current_position.y)
             print(f'Tick {step_count} | action: {action.name}, outcome: {output.outcome.name}, ' \
-                  f'position: {output.position}, distance: {calculate_distance(current_position, goal)}')
+                  f'position: {output.position}, distance: {distance}')
         
             if current_position == goal:
                 stopping_reason = 'GOAL_REACHED'
