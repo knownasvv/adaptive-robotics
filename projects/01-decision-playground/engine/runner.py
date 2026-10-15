@@ -1,15 +1,15 @@
 # Execute the selected route and inspect actual outcomes
 
-import copy
-
-from data.data_models import Point, StepOutput
+from data.data_models import StepOutput
 from data.models import StepAction, StepOutcome
 
-def _get_outcome(grid: Point, obstacles: list[Point], position: Point, action: StepAction) -> StepOutcome:
+def _get_outcome(grid: tuple[int, int], obstacles: list[tuple[int, int]], position: tuple[int, int], action: StepAction) -> StepOutcome:
     if action == StepAction.WAIT:
         return StepOutcome.WAITED
 
-    if position.x >= grid.x or position.y >= grid.y or position.x < 0 or position.y < 0:
+    width, height = grid
+    x, y = position
+    if x >= width or y >= height or x < 0 or y < 0:
         return StepOutcome.OUT_OF_BOUNDS
 
     for obstacle in obstacles:
@@ -20,20 +20,21 @@ def _get_outcome(grid: Point, obstacles: list[Point], position: Point, action: S
 
 
 def step(
-    grid: Point,
-    obstacles: list[Point], 
-    current_position: Point, 
+    grid: tuple[int, int],
+    obstacles: list[tuple[int, int]],
+    current_position: tuple[int, int],
     action: StepAction
 ) -> StepOutput:
-    candidate_position = copy.copy(current_position)
+    x, y = current_position
+    candidate_position = current_position
     if action == StepAction.UP:
-        candidate_position.y -= 1
+        candidate_position = (x, y - 1)
     elif action == StepAction.DOWN:
-        candidate_position.y += 1
+        candidate_position = (x, y + 1)
     elif action == StepAction.LEFT:
-        candidate_position.x -= 1
+        candidate_position = (x - 1, y)
     elif action == StepAction.RIGHT:
-        candidate_position.x += 1
+        candidate_position = (x + 1, y)
 
     outcome = _get_outcome(grid, obstacles, candidate_position, action)
     if outcome in [StepOutcome.OUT_OF_BOUNDS, StepOutcome.BLOCKED]:
@@ -43,15 +44,17 @@ def step(
 
 
 def choose_action(
-    current_position: Point,
-    goal: Point,
+    current_position: tuple[int, int],
+    goal: tuple[int, int],
 ) -> StepAction:
-    if current_position.x < goal.x:
+    x, y = current_position
+    goal_x, goal_y = goal
+    if x < goal_x:
         return StepAction.RIGHT
-    elif current_position.x > goal.x:
+    elif x > goal_x:
         return StepAction.LEFT
-    elif current_position.y < goal.y:
+    elif y < goal_y:
         return StepAction.DOWN
-    elif current_position.y > goal.y:
+    elif y > goal_y:
         return StepAction.UP
     return StepAction.WAIT
