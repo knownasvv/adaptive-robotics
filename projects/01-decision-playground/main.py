@@ -1,34 +1,7 @@
 import copy
 
-from enum import Enum
-from dataclasses import dataclass
-
-
-class StepAction(Enum):
-    UP = 1
-    DOWN = 2
-    LEFT = 3
-    RIGHT = 4
-    WAIT = 5
-
-
-class StepOutcome(Enum):
-    MOVED = 1
-    BLOCKED = 2
-    OUT_OF_BOUNDS = 3
-    WAITED = 4
-
-
-@dataclass
-class Point:
-    x: int
-    y: int
-
-
-@dataclass
-class StepOutput:
-    position: Point
-    outcome: StepOutcome
+from data_models import Point, StepOutput
+from models import StepAction, StepOutcome
 
 
 def get_outcome(grid: Point, obstacles: list[Point], position: Point, action: StepAction) -> StepOutcome:
