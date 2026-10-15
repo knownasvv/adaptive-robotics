@@ -14,3 +14,8 @@ class StepOutcome(Enum):
     BLOCKED = 2
     OUT_OF_BOUNDS = 3
     WAITED = 4
+ 
+ 
+class StoppingReason(Enum):
+    GOAL_REACHED = 1
+    STEP_LIMIT = 2
