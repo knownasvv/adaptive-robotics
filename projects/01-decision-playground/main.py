@@ -10,7 +10,7 @@ if __name__ == '__main__':
     # y = 1 │ . R # .
     # y = 2 │ . . . .
     
-    # test_step()
-    # test_choose_action()
-    # test_get_neighbors()
+    test_step()
+    test_choose_action()
+    test_get_neighbors()
     test_find_path()

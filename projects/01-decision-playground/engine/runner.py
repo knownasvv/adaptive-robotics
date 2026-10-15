@@ -1,7 +1,5 @@
 # Execute the selected route and inspect actual outcomes
 
-from copy import copy
-
 from data.data_models import StepOutput
 from data.models import StepAction, StepOutcome
 
@@ -27,7 +25,7 @@ def step(
     current_position: tuple[int, int],
     action: StepAction
 ) -> StepOutput:
-    candidate_position = copy(current_position)
+    candidate_position = current_position
     x, y = candidate_position
     if action == StepAction.UP:
         candidate_position = (x, y - 1)
