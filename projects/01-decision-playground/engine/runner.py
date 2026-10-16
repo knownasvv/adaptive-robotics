@@ -58,7 +58,7 @@ def choose_action(
 def action_between(
     current_position: tuple[int, int],
     next_position: tuple[int, int],
-) -> StepAction | None:
+) -> StepAction:
     position_delta = tuple(a - b for a, b in zip(current_position, next_position))
     match position_delta:
         case (0, 1):  return StepAction.UP
@@ -69,7 +69,7 @@ def action_between(
 
 def execute_path(
     grid: tuple[int, int],
-    obstacles: tuple[int, int],
+    obstacles: set[tuple[int, int]],
     path: list[tuple[int, int]],
     action_budget: int,
 ) -> PathExecutionOutput:
