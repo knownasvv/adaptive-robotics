@@ -16,7 +16,7 @@ def transition(
     event: NavigationEvent,
 ) -> NavigationState:
     try:
-        TRANSITION_RULES.get((state, event), ValueError)
+        return TRANSITION_RULES[(state, event)]
     except KeyError:
         raise ValueError(f'invalid state and event combinations with state {state} and event {event}')
         
