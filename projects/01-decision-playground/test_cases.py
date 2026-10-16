@@ -32,7 +32,8 @@ def test_find_path():
         }
     ]
 
-    for case in cases:
+    for index, case in enumerate(cases):
+        print(f'\n----- Case {index} -----')
         start = case['start']
         goal = case['goal']
         obstacles = case['obstacles']
@@ -238,6 +239,7 @@ def test_action_between():
         print(f'\n----- Case {index} -----')
         
         actual = action_between(current, target)
+        print(f'  result: {actual}')
         assert actual == expected, (f'{current} -> {target}: expected {expected}, got {actual}')
 
     invalid_cases = [
@@ -249,7 +251,8 @@ def test_action_between():
     for index, (current, target) in enumerate(invalid_cases):
         print(f'\n----- Invalid Case {index} -----')
         try:
-            action_between(current, target)
+            actual = action_between(current, target)
+            print(f'  result: {actual}')
         except ValueError:
             pass
         else:
