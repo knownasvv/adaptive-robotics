@@ -3,12 +3,10 @@ import unittest
 from engine.planner import get_neighbors, find_path
 
 
+GRID = (4, 3)
+
 class TestPlanner(unittest.TestCase):
-    def test_find_path():
-        print(f'\n================= test_find_path() =================')
-
-        grid = (4, 3)
-
+    def test_find_path(self):
         cases = [
             {
                 'start': (1, 1),
@@ -31,27 +29,21 @@ class TestPlanner(unittest.TestCase):
         ]
 
         for index, case in enumerate(cases):
-            print(f'\n----- Case {index} -----')
             start = case['start']
             goal = case['goal']
             obstacles = case['obstacles']
             expected_return = case['expected_return']
             
-            path = find_path(
-                grid=grid,
-                obstacles=obstacles,
-                start=start,
-                goal=goal
-            )
-            print(f'returned path: {path}')
-            assert path == expected_return
+            with self.subTest(index=index):
+                path = find_path(
+                    grid=GRID,
+                    obstacles=obstacles,
+                    start=start,
+                    goal=goal
+                )
+                self.assertEqual(path, expected_return)
 
-
-    def test_get_neighbors():
-        print(f'\n================= test_get_neighbors() =================')
-
-        grid = (4, 3)
-
+    def test_get_neighbors(self):
         cases = [
             { # 1. Exclude an occupied neighbor
                 'position': (1, 1),
@@ -73,24 +65,24 @@ class TestPlanner(unittest.TestCase):
         ]
 
         for index, case in enumerate(cases):
-            print(f'\n----- Case {index} -----')
-
             position = case['position']
             obstacles = case['obstacles']
             expected_neighbors = case['expected_neighbors']
             original_position = position
             original_obstacles = obstacles.copy()
 
-            neighbors = get_neighbors(
-                grid=grid,
-                obstacles=obstacles,
-                position=position
-            )
-            print(f'  neighbors: {neighbors}, expected neighbors: {expected_neighbors}')
-            assert neighbors == expected_neighbors
-            assert position == original_position
-            assert obstacles == original_obstacles
-            assert len(set(neighbors)) == len(neighbors)
+
+            with self.subTest(index=index):
+                neighbors = get_neighbors(
+                    grid=GRID,
+                    obstacles=obstacles,
+                    position=position
+                )
+
+                self.assertEqual(neighbors, expected_neighbors)
+                self.assertEqual(position, original_position)
+                self.assertEqual(obstacles, original_obstacles)
+                self.assertEqual(len(set(neighbors)), len(neighbors))
 
 
 if __name__ == '__main__':

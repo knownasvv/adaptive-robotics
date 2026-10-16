@@ -1,16 +1,14 @@
 import unittest
 
-
 from data.data_models import StepOutput, PathExecutionOutput
 from data.models import StepAction, StepOutcome, StoppingReason
 from engine.runner import step, choose_action, action_between, execute_path, navigate
 
 
-class TestRunner(unittest.TestCase):
-    def test_step():
-        print(f'\n================= test_step() =================')
+GRID = (4, 3)
 
-        grid = (4, 3)
+class TestRunner(unittest.TestCase):
+    def test_step(self):
         obstacles = {(2, 1)}
         position = (1, 1)
 
@@ -30,34 +28,24 @@ class TestRunner(unittest.TestCase):
             { 'action': StepAction.UP,    'expected_output': StepOutput((3, 0), StepOutcome.OUT_OF_BOUNDS)  },  # move up from the top edge
         ]
         i = 0
-        print(f'Tick {i} | position: {position}')
         for index, case in enumerate(cases):
-            print(f'\n----- Case {index} -----')
             action = case['action']
             expected_output = case['expected_output']
 
-            output = step(
-                grid=grid,
-                obstacles=obstacles,
-                current_position=position,
-                action=action)
-            position = output.position
-            i += 1
-            print(f'Tick {i} | after: {action.name}, output: {output}')
+            with self.subTest(index=index):
+                output = step(
+                    grid=GRID,
+                    obstacles=obstacles,
+                    current_position=position,
+                    action=action)
+                position = output.position
+                i += 1
+                self.assertEqual(output, expected_output)
 
-            # Validate
-            try:
-                assert output == expected_output
-            except AssertionError as ex:
-                print(f'   Assertion failed, expected output: {expected_output}')
-                raise ex
-
-    def test_choose_action():
-        print(f'\n================= test_choose_action() =================')
-
-        grid = (4, 3)
+    def test_choose_action(self):
         cases = [
             {
+                'name': 'goal reached',
                 'start': (0, 0),
                 'goal': (3, 2),
                 'obstacles': set(),
@@ -67,6 +55,7 @@ class TestRunner(unittest.TestCase):
                 'step_count_budget': 5,
             },
             {
+                'name': 'custom limit reached',
                 'start': (0, 0),
                 'goal': (3, 2),
                 'obstacles': set(),
@@ -76,6 +65,7 @@ class TestRunner(unittest.TestCase):
                 'step_count_budget': 4,
             },
             {
+                'name': 'goal reached with no step',
                 'start': (3, 2),
                 'goal': (3, 2),
                 'obstacles': set(),
@@ -84,6 +74,7 @@ class TestRunner(unittest.TestCase):
                 'final_position': (3, 2),
             },
             {
+                'name': 'limit reached',
                 'start': (1, 1),
                 'goal': (3, 1),
                 'obstacles': {(2, 1)},
@@ -92,6 +83,7 @@ class TestRunner(unittest.TestCase):
                 'final_position': (1, 1),
             },
             {
+                'name': 'goal reached from the bottom right corner',
                 'start': (3, 2),
                 'goal': (0, 0),
                 'obstacles': set(),
@@ -102,8 +94,7 @@ class TestRunner(unittest.TestCase):
         ]
 
         for index, case in enumerate(cases):
-            print(f'\n----- Case {index} -----')
-
+            name = case['name']
             start = case['start']
             goal = case['goal']
             obstacles = case['obstacles']
@@ -114,64 +105,50 @@ class TestRunner(unittest.TestCase):
 
             step_count = 0
             current_position = start
-            print(f'Tick {step_count} | start: {start}, goal: {goal}, obstacles: {obstacles}')
-            while step_count < step_count_budget:
-                if current_position == goal:
-                    break
+            with self.subTest(case=name, index=index):
+                while step_count < step_count_budget:
+                    if current_position == goal:
+                        break
 
-                action = choose_action(current_position, goal)
-                output = step(grid, obstacles, current_position, action)
-                current_position = output.position
+                    action = choose_action(current_position, goal)
+                    output = step(GRID, obstacles, current_position, action)
+                    current_position = output.position
 
-                step_count += 1
-                distance = abs(goal[0] - current_position[0]) + abs(goal[1] - current_position[1])
-                print(f'Tick {step_count} | action: {action.name}, outcome: {output.outcome.name}, ' \
-                    f'position: {output.position}, distance: {distance}')
+                    step_count += 1
+                    
+                stopping_reason = StoppingReason.GOAL_REACHED if current_position == goal else StoppingReason.STEP_LIMIT
 
-            stopping_reason = StoppingReason.GOAL_REACHED if current_position == goal else StoppingReason.STEP_LIMIT
-            print(f'   Stopping reason: {stopping_reason}')
+                self.assertEqual(step_count, expected_step_count, step_count)
+                self.assertEqual(current_position, final_position, current_position)
+                self.assertEqual(stopping_reason, expected_stopping_reason, stopping_reason)
 
-            assert step_count == expected_step_count
-            assert current_position == final_position
-            assert stopping_reason == expected_stopping_reason
-
-
-    def test_action_between():
-        print(f'\n================= test_action_between() =================')
-        
+    def test_action_between(self):
         cases = [
-            ((1, 1), (1, 0), StepAction.UP),
-            ((1, 1), (1, 2), StepAction.DOWN),
-            ((1, 1), (0, 1), StepAction.LEFT),
-            ((1, 1), (2, 1), StepAction.RIGHT),
+            ('up', (1, 1), (1, 0), StepAction.UP),
+            ('down', (1, 1), (1, 2), StepAction.DOWN),
+            ('left', (1, 1), (0, 1), StepAction.LEFT),
+            ('right', (1, 1), (2, 1), StepAction.RIGHT),
         ]
 
-        for index, (current, target, expected) in enumerate(cases):
-            print(f'\n----- Case {index} -----')
-            
-            actual = action_between(current, target)
-            print(f'  result: {actual}')
-            assert actual == expected, (f'{current} -> {target}: expected {expected}, got {actual}')
+        for index, (name, current, target, expected) in enumerate(cases):
+            with self.subTest(case=name, index=index):
+                actual = action_between(current, target)
+                self.assertEqual(actual, expected, (f'{current} -> {target}: expected {expected}, got {actual}'))
 
         invalid_cases = [
-            ((1, 1), (1, 1)),  # No movement
-            ((1, 1), (2, 2)),  # Diagonal movement
-            ((1, 1), (3, 1)),  # More than one cell
+            ('no movement', (1, 1), (1, 1)),  # No movement
+            ('diagonal movement', (1, 1), (2, 2)),  # Diagonal movement
+            ('more than one cell', (1, 1), (3, 1)),  # More than one cell
         ]
 
-        for index, (current, target) in enumerate(invalid_cases):
-            print(f'\n----- Invalid Case {index} -----')
-            try:
-                actual = action_between(current, target)
-                print(f'  result: {actual}')
-            except ValueError:
-                pass
-            else:
-                raise AssertionError(f'Expected ValueError for {current} -> {target}')
+        for index, (name, current, target) in enumerate(invalid_cases):
+            with self.subTest(case='invalid case - ' + name, index=index):
+                try:
+                    actual = action_between(current, target)
+                except Exception as ex:
+                    self.assertIsInstance(ex, ValueError, f'Expected ValueError for {current} -> {target}')
             
-    def test_execute_path():
-        print(f'\n================= test_execute_path() =================')
-        grid = (4, 3)
+    def test_execute_path(self):
         detour = [(1, 1), (1, 0), (2, 0), (3, 0), (3, 1)]
 
         cases = [
@@ -233,28 +210,27 @@ class TestRunner(unittest.TestCase):
 
         for index, case in enumerate(cases):
             name = case['name']
-            print(f'\n----- Case {index}: {name} -----')
             path = case['path'].copy()
             obstacles = case['obstacles'].copy()
             original_path = path.copy()
             original_obstacles = obstacles.copy()
 
-            result = execute_path(
-                grid=grid,
-                obstacles=obstacles,
-                path=path,
-                action_budget=case['budget'],
-            )
+            with self.subTest(case=name, index=index):
+                result = execute_path(
+                    grid=GRID,
+                    obstacles=obstacles,
+                    path=path,
+                    action_budget=case['budget'],
+                )
 
-            assert result.position == case['position'], result
-            assert result.executed_count == case['ticks'], result
-            assert result.stopping_reason == case['reason'], result
+                self.assertEqual(result.position, case['position'], result)
+                self.assertEqual(result.executed_count, case['ticks'], result)
+                self.assertEqual(result.stopping_reason, case['reason'], result)
 
-            assert path == original_path, result
-            assert obstacles == original_obstacles, result
+                self.assertEqual(path, original_path, result)
+                self.assertEqual(obstacles, original_obstacles, result)
             
-    def test_navigate():
-        grid = (4, 3)
+    def test_navigate(self):
         
         cases = [
             {
@@ -305,22 +281,21 @@ class TestRunner(unittest.TestCase):
         
         for index, case in enumerate(cases):
             name = case['name']
-            print(f'\n----- Case {index}: {name} -----')
-            
             start = case['start']
             goal = case['goal']
             obstacles = case['obstacles']
             budget = case['budget']
             expected_result = case['expected_result']
             
-            result = navigate(
-                grid=grid,
-                obstacles=obstacles,
-                start=start,
-                goal=goal,
-                action_budget=budget
-            )
-            assert result == expected_result, result
+            with self.subTest(case=name, index=index):
+                result = navigate(
+                    grid=GRID,
+                    obstacles=obstacles,
+                    start=start,
+                    goal=goal,
+                    action_budget=budget
+                )
+                self.assertEqual(result, expected_result, result)
 
 
 if __name__ == '__main__':
