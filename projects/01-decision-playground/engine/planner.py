@@ -65,7 +65,9 @@ def find_path(
         current = frontier.popleft()
         
         if current == goal:
-            return _reconstruct_path(came_from, goal)
+            path = _reconstruct_path(came_from, goal)
+            print(f'  [find_path()] path found: {path}')
+            return path
         
         neighbors = get_neighbors(
             grid=grid,
