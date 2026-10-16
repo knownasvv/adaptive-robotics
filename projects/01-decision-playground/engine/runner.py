@@ -1,6 +1,8 @@
 # Execute the selected route and inspect actual outcomes
 import logging
 
+from collections.abc import Callable
+
 from data.data_models import NavigationOutput, StepOutput, PathExecutionOutput
 from data.models import NavigationEvent, NavigationState, StepAction, StepOutcome, StoppingReason
 
@@ -76,6 +78,7 @@ def execute_path(
     obstacles: set[tuple[int, int]],
     path: list[tuple[int, int]],
     action_budget: int,
+    obstacles_at: Callable[[int], set[tuple[int, int]]] | None = None,
 ) -> PathExecutionOutput:
     current_position = path[0]
     next_index = 1
@@ -89,9 +92,10 @@ def execute_path(
             current_position=current_position,
             next_position=next_position
         )
+        current_obstacles = obstacles_at(execution_count) if obstacles_at is not None else obstacles
         step_outcome = step(
             grid=grid,
-            obstacles=obstacles,
+            obstacles=current_obstacles,
             current_position=current_position,
             action=action
         )
@@ -122,6 +126,7 @@ def navigate(
     start: tuple[int, int],
     goal: tuple[int, int],
     action_budget: int,
+    obstacles_at: Callable[[int], set[tuple[int, int]]] | None = None,
 ) -> NavigationOutput:
     current_state = NavigationState.IDLE
     state_history = [current_state]
@@ -168,7 +173,8 @@ def navigate(
         grid=grid,
         obstacles=obstacles,
         path=path,
-        action_budget=action_budget
+        action_budget=action_budget,
+        obstacles_at=obstacles_at
     )
     
     print(f'execution_output: {execution_output}')
