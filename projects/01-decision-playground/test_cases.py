@@ -252,6 +252,8 @@ def test_action_between():
             action_between(current, target)
         except ValueError:
             pass
+        else:
+            raise AssertionError(f"Expected ValueError for {current} -> {target}")
         
 def test_execute_path():
     print(f'\n================= test_execute_path() =================')

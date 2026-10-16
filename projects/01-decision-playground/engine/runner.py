@@ -65,7 +65,7 @@ def action_between(
         case (0, -1): return StepAction.DOWN
         case (1, 0):  return StepAction.LEFT
         case (-1, 0): return StepAction.RIGHT
-        case _: return None
+        case _: raise ValueError
 
 def execute_path(
     grid: tuple[int, int],
@@ -73,21 +73,18 @@ def execute_path(
     path: list[tuple[int, int]],
     action_budget: int,
 ) -> PathExecutionOutput:
-    _path = path.copy()
-    current_position = _path[0]
+    current_position = path[0]
+    next_index = 1
     
     execution_count = 0
     stopping_reason = StoppingReason.STEP_LIMIT
-    while len(_path) > 0 and execution_count < action_budget:
+    while next_index < len(path) and execution_count < action_budget:
         print(f'Tick {execution_count}')
-        next_position = _path[1]
+        next_position = path[next_index]
         action = action_between(
             current_position=current_position,
             next_position=next_position
         )
-        
-        print(f'  path: {_path}, current_position: {current_position}, next_position: {next_position}')    
-        
         step_outcome = step(
             grid=grid,
             obstacles=obstacles,
@@ -96,16 +93,15 @@ def execute_path(
         )
         print(f'  action: {action}, step_outcome: {step_outcome}')
         execution_count += 1
+        current_position = step_outcome.position
         
-        if step_outcome.outcome != StepOutcome.MOVED:
+        if step_outcome.outcome != StepOutcome.MOVED :
             stopping_reason = StoppingReason.EXECUTION_FAILED
             break 
 
-        _path.pop(0)
-        current_position = next_position
+        next_index += 1
         
-    _path.pop(0)
-    if not _path:
+    if next_index == len(path):
         stopping_reason = StoppingReason.GOAL_REACHED
             
     return PathExecutionOutput(
