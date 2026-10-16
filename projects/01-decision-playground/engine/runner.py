@@ -95,11 +95,12 @@ def execute_path(
         execution_count += 1
         current_position = step_outcome.position
         
-        if step_outcome.outcome != StepOutcome.MOVED :
+        if step_outcome.outcome != StepOutcome.MOVED:
             stopping_reason = StoppingReason.EXECUTION_FAILED
             break 
 
-        next_index += 1
+        if step_outcome.position == next_position:
+            next_index += 1
         
     if next_index == len(path):
         stopping_reason = StoppingReason.GOAL_REACHED
