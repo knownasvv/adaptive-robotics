@@ -463,7 +463,10 @@ def test_navigate(case, monkeypatch):
         )
 
     result = navigate(
-        GRID, case["obstacles"], case["start"],
-        case["goal"], case["budget"],
+        grid=GRID, 
+        obstacles=case["obstacles"], 
+        start=case["start"],
+        goal=case["goal"], 
+        action_budget=case["budget"],
     )
     assert result == case["expected_result"]
