@@ -3,6 +3,8 @@
 from data.data_models import StepOutput, PathExecutionOutput
 from data.models import StepAction, StepOutcome, StoppingReason
 
+from .planner import find_path
+
 def _get_outcome(grid: tuple[int, int], obstacles: set[tuple[int, int]], position: tuple[int, int], action: StepAction) -> StepOutcome:
     if action == StepAction.WAIT:
         return StepOutcome.WAITED
@@ -67,6 +69,7 @@ def action_between(
         case (-1, 0): return StepAction.RIGHT
         case _: raise ValueError
 
+# Follow a supplied route within an action budget
 def execute_path(
     grid: tuple[int, int],
     obstacles: set[tuple[int, int]],
@@ -109,4 +112,34 @@ def execute_path(
         position=current_position,
         executed_count=execution_count,
         stopping_reason=stopping_reason
+    )
+
+
+# Calling both and handling the absence of a route
+def navigate(
+    grid: tuple[int, int],
+    obstacles: set[tuple[int, int]],
+    start: tuple[int, int],
+    goal: tuple[int, int],
+    action_budget: int,
+) -> PathExecutionOutput:
+    path = find_path(
+        grid=grid,
+        obstacles=obstacles,
+        start=start,
+        goal=goal
+    )
+    
+    if path is None:
+        return PathExecutionOutput(
+            position=start,
+            executed_count=0,
+            stopping_reason=StoppingReason.NO_PATH
+        )
+    
+    return execute_path(
+        grid=grid,
+        obstacles=obstacles,
+        path=path,
+        action_budget=action_budget
     )

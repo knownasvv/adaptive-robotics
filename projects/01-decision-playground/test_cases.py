@@ -1,8 +1,8 @@
-from data.data_models import StepOutput
+from data.data_models import StepOutput, PathExecutionOutput
 from data.models import StepAction, StepOutcome, StoppingReason
 
 from engine.planner import get_neighbors, find_path
-from engine.runner import step, choose_action, action_between, execute_path
+from engine.runner import step, choose_action, action_between, execute_path, navigate
 
 
 # planner
@@ -317,9 +317,9 @@ def test_execute_path():
         },
     ]
 
-    for case in cases:
+    for index, case in enumerate(cases):
         name = case["name"]
-        print(f'\n----- Case: {name} -----')
+        print(f'\n----- Case {index}: {name} -----')
         path = case["path"].copy()
         obstacles = case["obstacles"].copy()
         original_path = path.copy()
@@ -338,3 +338,71 @@ def test_execute_path():
 
         assert path == original_path, result
         assert obstacles == original_obstacles, result
+        
+def test_navigate():
+    grid = (4, 3)
+    
+    cases = [
+        {
+            'name': 'clear route',
+            'start': (0, 0),
+            'goal': (3, 2),
+            'obstacles': set(),
+            'budget': 10,
+            'expected_result': PathExecutionOutput((3, 2), 5, StoppingReason.GOAL_REACHED)
+        }, {
+            'name': 'detour',
+            'start': (1, 1),
+            'goal': (3, 1),
+            'obstacles': {(2, 1)},
+            'budget': 4,
+            'expected_result': PathExecutionOutput((3, 1), 4, StoppingReason.GOAL_REACHED)
+        }, {
+            'name': 'incomplete detour',
+            'start': (0, 0),
+            'goal': (3, 2),
+            'obstacles': {(2, 1)},
+            'budget': 3,
+            'expected_result': PathExecutionOutput((3, 0), 3, StoppingReason.STEP_LIMIT)
+        }, {
+            'name': 'already complete',
+            'start': (1, 1),
+            'goal': (1, 1),
+            'obstacles': set(),
+            'budget': 0,
+            'expected_result': PathExecutionOutput((3, 2), 5, StoppingReason.GOAL_REACHED)
+        }, {
+            'name': 'no movement budget',
+            'start': (1, 1),
+            'goal': (3, 1),
+            'obstacles': {(2, 1)},
+            'budget': 0,
+            'expected_result': PathExecutionOutput((3, 2), 5, StoppingReason.STEP_LIMIT)
+        }, {
+            'name': 'enclosed start',
+            'start': (1, 1),
+            'goal': (3, 1),
+            'obstacles': {(1, 0), (1, 2), (0, 1), (2, 1)},
+            'budget': 10,
+            'expected_result': PathExecutionOutput((3, 2), 5, StoppingReason.NO_PATH)
+        }, 
+    ]
+    
+    for index, case in enumerate(cases):
+        name = case["name"]
+        print(f'\n----- Case {index}: {name} -----')
+        
+        start = case["start"]
+        goal = case['goal']
+        obstacles = case["obstacles"]
+        budget = case['budget']
+        expected_result = case['expected_result']
+        
+        result = navigate(
+            grid=grid,
+            obstacles=obstacles,
+            start=start,
+            goal=goal,
+            action_budget=budget
+        )
+        assert result == expected_result, result
