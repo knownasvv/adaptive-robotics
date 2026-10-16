@@ -297,6 +297,103 @@ def test_execute_path(case):
 
 
 @pytest.mark.parametrize(
+    "path, snapshots, budget, expected",
+    [
+        pytest.param(
+            DETOUR,
+            [{(2, 1)}, {(2, 1), (2, 0)}],
+            4,
+            PathExecutionOutput(
+                (1, 0), 2, StoppingReason.EXECUTION_FAILED
+            ),
+            id="obstacle appears before second action",
+        ),
+        pytest.param(
+            DETOUR,
+            [{(2, 1), (1, 0)}],
+            4,
+            PathExecutionOutput(
+                (1, 1), 1, StoppingReason.EXECUTION_FAILED
+            ),
+            id="first action blocked",
+        ),
+        pytest.param(
+            DETOUR,
+            [{(2, 1), (2, 0)}, {(2, 1)}, {(2, 1)}, {(2, 1)}],
+            4,
+            PathExecutionOutput(
+                (3, 1), 4, StoppingReason.GOAL_REACHED
+            ),
+            id="obstacle clears before robot reaches it",
+        ),
+        pytest.param(
+            DETOUR,
+            [{(2, 1)}, {(2, 1), (2, 0)}],
+            2,
+            PathExecutionOutput(
+                (1, 0), 2, StoppingReason.EXECUTION_FAILED
+            ),
+            id="blocked action at budget limit reports failure",
+        ),
+        pytest.param(
+            DETOUR,
+            [{(2, 1)}],
+            1,
+            PathExecutionOutput(
+                (1, 0), 1, StoppingReason.STEP_LIMIT
+            ),
+            id="budget exhausted before second action",
+        ),
+        pytest.param(
+            DETOUR,
+            [],
+            0,
+            PathExecutionOutput(
+                (1, 1), 0, StoppingReason.STEP_LIMIT
+            ),
+            id="zero budget does not query environment",
+        ),
+        pytest.param(
+            [(1, 1)],
+            [],
+            4,
+            PathExecutionOutput(
+                (1, 1), 0, StoppingReason.GOAL_REACHED
+            ),
+            id="already at goal does not query environment",
+        ),
+    ],
+)
+def test_execute_path_dynamic_obstacles(path, snapshots, budget, expected):
+    initial_obstacles = {(2, 1)}
+    original_obstacles = initial_obstacles.copy()
+    supplied_path = path.copy()
+    supplied_snapshots = [snapshot.copy() for snapshot in snapshots]
+    observed_ticks = []
+
+    # Returns the complete occupied-cell set for the passed tick
+    def obstacles_at(tick) -> set[tuple[int, int]]:
+        observed_ticks.append(tick)
+        return supplied_snapshots[tick]
+
+    result = execute_path(
+        grid=GRID,
+        obstacles=initial_obstacles,
+        path=supplied_path,
+        action_budget=budget,
+        obstacles_at=obstacles_at,
+    )
+
+    assert result == expected
+    assert observed_ticks == list(range(expected.executed_count))
+
+    # Execution must not modify caller-owned inputs.
+    assert initial_obstacles == original_obstacles
+    assert supplied_path == path
+    assert supplied_snapshots == snapshots
+
+
+@pytest.mark.parametrize(
     "case",
     [
         pytest.param(
@@ -470,3 +567,96 @@ def test_navigate(case, monkeypatch):
         action_budget=case["budget"],
     )
     assert result == case["expected_result"]
+
+
+@pytest.mark.parametrize(
+    "initial_obstacles, goal, snapshots, budget, expected_execution, expected_history",
+    [
+        pytest.param(
+            {(2, 1)},
+            (3, 1),
+            [{(2, 1)}, {(2, 1), (2, 0)}],
+            4,
+            PathExecutionOutput((1, 0), 2, StoppingReason.EXECUTION_FAILED),
+            [
+                NavigationState.IDLE,
+                NavigationState.PLANNING,
+                NavigationState.EXECUTING,
+                NavigationState.FAILED,
+            ],
+            id="dynamic obstacle blocks second movement",
+        ),
+        pytest.param(
+            {(2, 1)},
+            (3, 1),
+            [{(2, 1)}, {(2, 1)}, {(2, 1)}, {(2, 1)}],
+            4,
+            PathExecutionOutput((3, 1), 4, StoppingReason.GOAL_REACHED),
+            [
+                NavigationState.IDLE,
+                NavigationState.PLANNING,
+                NavigationState.EXECUTING,
+                NavigationState.SUCCEEDED,
+            ],
+            id="clear snapshots complete planned detour",
+        ),
+        pytest.param(
+            {(2, 1)},
+            (3, 1),
+            [],
+            0,
+            PathExecutionOutput((1, 1), 0, StoppingReason.STEP_LIMIT),
+            [
+                NavigationState.IDLE,
+                NavigationState.PLANNING,
+                NavigationState.EXECUTING,
+                NavigationState.FAILED,
+            ],
+            id="zero budget never queries execution environment",
+        ),
+        pytest.param(
+            {(2, 1)},
+            (1, 1),
+            [],
+            4,
+            PathExecutionOutput((1, 1), 0, StoppingReason.GOAL_REACHED),
+            [NavigationState.IDLE, NavigationState.PLANNING, NavigationState.SUCCEEDED],
+            id="already at goal skips execution environment",
+        ),
+        pytest.param(
+            {(1, 0), (1, 2), (0, 1), (2, 1)},
+            (3, 1),
+            [],
+            4,
+            PathExecutionOutput((1, 1), 0, StoppingReason.NO_PATH),
+            [NavigationState.IDLE, NavigationState.PLANNING, NavigationState.FAILED],
+            id="no initial route skips execution environment",
+        ),
+    ],
+)
+def test_navigate_dynamic_obstacles(
+    initial_obstacles, goal, snapshots, budget, expected_execution, expected_history
+):
+    # Planning uses the initial map; execution observes one snapshot per action.
+    obstacles = initial_obstacles.copy()
+    supplied_snapshots = [snapshot.copy() for snapshot in snapshots]
+    observed_ticks = []
+
+    def obstacles_at(tick):
+        observed_ticks.append(tick)
+        return supplied_snapshots[tick]
+
+    result = navigate(
+        grid=GRID,
+        obstacles=obstacles,
+        start=(1, 1),
+        goal=goal,
+        action_budget=budget,
+        obstacles_at=obstacles_at,
+    )
+
+    assert result.execution == expected_execution
+    assert result.state_history == expected_history
+    assert observed_ticks == list(range(expected_execution.executed_count))
+    assert obstacles == initial_obstacles
+    assert supplied_snapshots == snapshots
