@@ -1,0 +1,6 @@
+pytest>=8,<9
+pyyaml
+
+# ros
+setuptools
+lark
