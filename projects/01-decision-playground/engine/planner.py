@@ -7,7 +7,6 @@
 # * There are no diagonal connections
 import logging
 
-
 from collections import deque
 
 
