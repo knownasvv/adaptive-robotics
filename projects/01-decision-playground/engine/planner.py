@@ -6,26 +6,22 @@
 #   3. It is not occupied.
 # * There are no diagonal connections
 
-# Requirements:
-# - Consider candidates in this fixed order: UP, DOWN, LEFT, RIGHT.
-# - Return only allowed positions, preserving that order.
-# - Return an empty list when no movement is possible.
-# - Do not include the starting position.
-# - Do not modify the input position or obstacles.
-# - Do not choose a route or consider the goal yet.
-# - Assume the input position is valid and unoccupied.
+from collections import deque
+
+
+# Return the allowed connections from one cell
 def get_neighbors(
     grid: tuple[int, int],
-    obstacles: list[tuple[int, int]],
+    obstacles: set[tuple[int, int]],
     position: tuple[int, int]
 ) -> list[tuple[int, int]]:
     width, height = grid
     x, y = position
     candidate_neighbors: list[tuple[int, int]] = [
-        (x, y - 1), # up
-        (x, y + 1), # down
-        (x - 1, y), # left
-        (x + 1, y), # right
+        (x,     y - 1), # up
+        (x,     y + 1), # down
+        (x - 1, y),     # left
+        (x + 1, y),     # right
     ]
     valid_neighbors: list[tuple[int, int]] = []
     for neighbor in candidate_neighbors:
@@ -38,3 +34,49 @@ def get_neighbors(
             valid_neighbors.append(neighbor)
 
     return valid_neighbors
+
+
+def _reconstruct_path(came_from, goal) -> list[tuple[int, int]]:
+    path = deque([goal])
+    cursor = came_from[goal]
+    
+    while cursor is not None:
+        path.append(cursor)
+        cursor = came_from[cursor]
+    
+    path.reverse()
+    return list(path)
+        
+
+# Search those connections and return a path
+def find_path(
+    grid: tuple[int, int],
+    obstacles: set[tuple[int, int]],
+    start: tuple[int, int],
+    goal: tuple[int, int]
+) -> list[tuple[int, int]] | None:
+    frontier = deque([start])
+    came_from: dict[
+        tuple[int, int], 
+        tuple[int, int] | None
+    ] = { start: None }
+    
+    while frontier:
+        current = frontier.popleft()
+        
+        if current == goal:
+            return _reconstruct_path(came_from, goal)
+        
+        neighbors = get_neighbors(
+            grid=grid,
+            obstacles=obstacles,
+            position=current
+        )
+        for neighbor in neighbors: 
+            if neighbor in came_from:
+                continue
+            
+            came_from[neighbor] = current
+            frontier.append(neighbor)
+    
+    return None

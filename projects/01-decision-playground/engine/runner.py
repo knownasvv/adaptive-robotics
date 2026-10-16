@@ -3,7 +3,7 @@
 from data.data_models import StepOutput
 from data.models import StepAction, StepOutcome
 
-def _get_outcome(grid: tuple[int, int], obstacles: list[tuple[int, int]], position: tuple[int, int], action: StepAction) -> StepOutcome:
+def _get_outcome(grid: tuple[int, int], obstacles: set[tuple[int, int]], position: tuple[int, int], action: StepAction) -> StepOutcome:
     if action == StepAction.WAIT:
         return StepOutcome.WAITED
 
@@ -21,12 +21,12 @@ def _get_outcome(grid: tuple[int, int], obstacles: list[tuple[int, int]], positi
 
 def step(
     grid: tuple[int, int],
-    obstacles: list[tuple[int, int]],
+    obstacles: set[tuple[int, int]],
     current_position: tuple[int, int],
     action: StepAction
 ) -> StepOutput:
-    x, y = current_position
     candidate_position = current_position
+    x, y = candidate_position
     if action == StepAction.UP:
         candidate_position = (x, y - 1)
     elif action == StepAction.DOWN:
