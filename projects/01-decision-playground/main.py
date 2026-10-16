@@ -1,5 +1,10 @@
-from test_cases import test_step, test_choose_action, test_get_neighbors, test_find_path
-    
+from test_cases import (
+    test_step, 
+    test_choose_action, 
+    test_get_neighbors, 
+    test_find_path,
+    test_action_between
+)
 
 if __name__ == '__main__':
 
@@ -14,3 +19,4 @@ if __name__ == '__main__':
     test_choose_action()
     test_get_neighbors()
     test_find_path()
+    test_action_between()

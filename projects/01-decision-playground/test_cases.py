@@ -2,7 +2,7 @@ from data.data_models import StepOutput
 from data.models import StepAction, StepOutcome, StoppingReason
 
 from engine.planner import get_neighbors, find_path
-from engine.runner import step, choose_action
+from engine.runner import step, choose_action, action_between
 
 
 # planner
@@ -222,3 +222,39 @@ def test_choose_action():
         assert step_count == expected_step_count
         assert current_position == final_position
         assert stopping_reason == expected_stopping_reason
+
+
+def test_action_between():
+    print(f'\n================= test_action_between() =================')
+    cases = [
+        {
+            'current_position': (1, 1), 
+            'next_position': (1, 0),
+            'expected_action': StepAction.UP
+        }, {
+            'current_position': (1, 0), 
+            'next_position': (2, 0),
+            'expected_action': StepAction.RIGHT
+        }, {
+            'current_position': (2, 0), 
+            'next_position': (3, 0),
+            'expected_action': StepAction.RIGHT
+        }, {
+            'current_position': (3, 0), 
+            'next_position': (3, 1),
+            'expected_action': StepAction.DOWN
+        },
+    ]
+    
+    for index, case in enumerate(cases):
+        print(f'\n----- Case {index} -----')
+        current_position = case['current_position']
+        next_position = case['next_position']
+        expected_action = case['expected_action']
+        
+        action = action_between(
+            current_position=current_position,
+            next_position=next_position
+        )
+        print(f'  action: {action}')
+        assert action == expected_action
