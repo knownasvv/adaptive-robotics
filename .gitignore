@@ -54,3 +54,6 @@ pip-delete-this-directory.txt
 .coverage.*
 coverage.xml
 nosetests.xml
+
+*.md
+!README.md

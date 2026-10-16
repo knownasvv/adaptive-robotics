@@ -1,10 +1,11 @@
 # Execute the selected route and inspect actual outcomes
 import logging
 
-from data.data_models import StepOutput, PathExecutionOutput
-from data.models import StepAction, StepOutcome, StoppingReason
+from data.data_models import NavigationOutput, StepOutput, PathExecutionOutput
+from data.models import NavigationEvent, NavigationState, StepAction, StepOutcome, StoppingReason
 
 from .planner import find_path
+from .navigation import transition
 
 def _get_outcome(grid: tuple[int, int], obstacles: set[tuple[int, int]], position: tuple[int, int], action: StepAction) -> StepOutcome:
     if action == StepAction.WAIT:
@@ -55,7 +56,6 @@ def choose_action(
         case _ if y < goal_y: return StepAction.DOWN
         case _ if y > goal_y: return StepAction.UP
     return StepAction.WAIT
-
 
 # Return the action connecting two adjacent cells
 def action_between(
@@ -115,15 +115,19 @@ def execute_path(
         stopping_reason=stopping_reason
     )
 
-
-# Calling both and handling the absence of a route
+# FSM
 def navigate(
     grid: tuple[int, int],
     obstacles: set[tuple[int, int]],
     start: tuple[int, int],
     goal: tuple[int, int],
     action_budget: int,
-) -> PathExecutionOutput:
+) -> NavigationOutput:
+    current_state = NavigationState.IDLE
+    state_history = [current_state]
+    
+    current_state = transition(current_state, NavigationEvent.START)
+    state_history.append(current_state)
     path = find_path(
         grid=grid,
         obstacles=obstacles,
@@ -131,16 +135,46 @@ def navigate(
         goal=goal
     )
     
+    #  No route
     if path is None:
-        return PathExecutionOutput(
-            position=start,
-            executed_count=0,
-            stopping_reason=StoppingReason.NO_PATH
+        current_state = transition(current_state, NavigationEvent.NO_PATH)
+        state_history.append(current_state)
+        return NavigationOutput(
+            execution=PathExecutionOutput(
+                position=start,
+                executed_count=0,
+                stopping_reason=StoppingReason.NO_PATH
+            ),
+            state_history=state_history
+        )
+
+    # A route containing only the starting cell
+    if path == [start]:
+        current_state = transition(current_state, NavigationEvent.ALREADY_AT_GOAL)
+        state_history.append(current_state)
+        return NavigationOutput(
+            execution=PathExecutionOutput(
+                position=start,
+                executed_count=0,
+                stopping_reason=StoppingReason.GOAL_REACHED
+            ),
+            state_history=state_history
         )
     
-    return execute_path(
+    # A route requiring movement
+    current_state = transition(current_state, NavigationEvent.PATH_FOUND)
+    state_history.append(current_state)
+    execution_output: PathExecutionOutput = execute_path(
         grid=grid,
         obstacles=obstacles,
         path=path,
         action_budget=action_budget
+    )
+    
+    print(f'execution_output: {execution_output}')
+    current_state = transition(current_state, execution_output.stopping_reason.toNavigationEvent())
+    state_history.append(current_state)
+    return NavigationOutput(
+        execution=execution_output,
+        state_history=state_history
     )

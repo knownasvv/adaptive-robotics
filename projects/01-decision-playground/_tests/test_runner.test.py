@@ -1,7 +1,7 @@
 import pytest
 
-from data.data_models import StepOutput, PathExecutionOutput
-from data.models import StepAction, StepOutcome, StoppingReason
+from data.data_models import NavigationOutput, StepOutput, PathExecutionOutput
+from data.models import NavigationState, StepAction, StepOutcome, StoppingReason
 from engine.runner import step, choose_action, action_between, execute_path, navigate
 
 GRID = (4, 3)
@@ -306,8 +306,16 @@ def test_execute_path(case):
                 "goal": (3, 2),
                 "obstacles": set(),
                 "budget": 10,
-                "expected_result": PathExecutionOutput(
-                    (3, 2), 5, StoppingReason.GOAL_REACHED
+                "expected_result": NavigationOutput(
+                    execution=PathExecutionOutput(
+                        (3, 2), 5, StoppingReason.GOAL_REACHED
+                    ),
+                    state_history=[
+                        NavigationState.IDLE,
+                        NavigationState.PLANNING,
+                        NavigationState.EXECUTING,
+                        NavigationState.SUCCEEDED,
+                    ]
                 ),
             },
             id="clear route",
@@ -319,8 +327,16 @@ def test_execute_path(case):
                 "goal": (3, 1),
                 "obstacles": {(2, 1)},
                 "budget": 4,
-                "expected_result": PathExecutionOutput(
-                    (3, 1), 4, StoppingReason.GOAL_REACHED
+                "expected_result": NavigationOutput(
+                    execution=PathExecutionOutput(
+                        (3, 1), 4, StoppingReason.GOAL_REACHED
+                    ),
+                    state_history=[
+                        NavigationState.IDLE,
+                        NavigationState.PLANNING,
+                        NavigationState.EXECUTING,
+                        NavigationState.SUCCEEDED,
+                    ]
                 ),
             },
             id="detour",
@@ -332,8 +348,16 @@ def test_execute_path(case):
                 "goal": (3, 1),
                 "obstacles": {(2, 1)},
                 "budget": 3,
-                "expected_result": PathExecutionOutput(
-                    (3, 0), 3, StoppingReason.STEP_LIMIT
+                "expected_result": NavigationOutput(
+                    execution=PathExecutionOutput(
+                        (3, 0), 3, StoppingReason.STEP_LIMIT
+                    ),
+                    state_history=[
+                        NavigationState.IDLE,
+                        NavigationState.PLANNING,
+                        NavigationState.EXECUTING,
+                        NavigationState.FAILED,
+                    ]
                 ),
             },
             id="incomplete detour",
@@ -345,8 +369,15 @@ def test_execute_path(case):
                 "goal": (1, 1),
                 "obstacles": set(),
                 "budget": 0,
-                "expected_result": PathExecutionOutput(
-                    (1, 1), 0, StoppingReason.GOAL_REACHED
+                "expected_result": NavigationOutput(
+                    execution=PathExecutionOutput(
+                        (1, 1), 0, StoppingReason.GOAL_REACHED
+                    ),
+                    state_history=[
+                        NavigationState.IDLE,
+                        NavigationState.PLANNING,
+                        NavigationState.SUCCEEDED,
+                    ]
                 ),
             },
             id="already complete",
@@ -358,8 +389,16 @@ def test_execute_path(case):
                 "goal": (3, 1),
                 "obstacles": {(2, 1)},
                 "budget": 0,
-                "expected_result": PathExecutionOutput(
-                    (1, 1), 0, StoppingReason.STEP_LIMIT
+                "expected_result": NavigationOutput(
+                    execution=PathExecutionOutput(
+                        (1, 1), 0, StoppingReason.STEP_LIMIT
+                    ),
+                    state_history=[
+                        NavigationState.IDLE,
+                        NavigationState.PLANNING,
+                        NavigationState.EXECUTING,
+                        NavigationState.FAILED,
+                    ]
                 ),
             },
             id="no movement budget",
@@ -371,16 +410,63 @@ def test_execute_path(case):
                 "goal": (3, 1),
                 "obstacles": {(1, 0), (1, 2), (0, 1), (2, 1)},
                 "budget": 10,
-                "expected_result": PathExecutionOutput(
-                    (1, 1), 0, StoppingReason.NO_PATH
+                "expected_result": NavigationOutput(
+                    execution=PathExecutionOutput(
+                        (1, 1), 0, StoppingReason.NO_PATH
+                    ),
+                    state_history=[
+                        NavigationState.IDLE,
+                        NavigationState.PLANNING,
+                        NavigationState.FAILED,
+                    ]
                 ),
             },
             id="enclosed start",
         ),
+        pytest.param(
+            {
+                "start": (1, 1),
+                "goal": (3, 1),
+                "obstacles": {(2, 1)},
+                "budget": 4,
+                "execution_stub": PathExecutionOutput(
+                    position=(1, 0),
+                    executed_count=2,
+                    stopping_reason=StoppingReason.EXECUTION_FAILED,
+                ),
+                "expected_result": NavigationOutput(
+                    execution=PathExecutionOutput(
+                        position=(1, 0),
+                        executed_count=2,
+                        stopping_reason=StoppingReason.EXECUTION_FAILED,
+                    ),
+                    state_history=[
+                        NavigationState.IDLE,
+                        NavigationState.PLANNING,
+                        NavigationState.EXECUTING,
+                        NavigationState.FAILED,
+                    ],
+                ),
+            },
+            id="movement failure during navigation",
+        )
     ],
 )
-def test_navigate(case):
+def test_navigate(case, monkeypatch):
+    if "execution_stub" in case:
+        def fake_execute_path(**kwargs):
+            return case["execution_stub"]
+
+        monkeypatch.setattr(
+            "engine.runner.execute_path",
+            fake_execute_path,
+        )
+
     result = navigate(
-        GRID, case["obstacles"], case["start"], case["goal"], case["budget"]
+        grid=GRID, 
+        obstacles=case["obstacles"], 
+        start=case["start"],
+        goal=case["goal"], 
+        action_budget=case["budget"],
     )
     assert result == case["expected_result"]

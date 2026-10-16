@@ -16,20 +16,13 @@ class StepOutcome(Enum):
     WAITED = 4
  
  
-class StoppingReason(Enum):
-    NO_PATH = 0
-    GOAL_REACHED = 'robot reaches the goal'
-    STEP_LIMIT = 'action budget expires before completion'
-    EXECUTION_FAILED = 'attempted movement fails'
-
-
 class NavigationState(Enum):
-    IDLE = 'no navigation attempt is active',
-    PLANNING = 'finding a route to the requested goal',
-    EXECUTING = 'following the route',
-    SUCCEEDED = 'the robot reached the goal',
+    IDLE = 'no navigation attempt is active'
+    PLANNING = 'finding a route to the requested goal'
+    EXECUTING = 'following the route'
+    SUCCEEDED = 'the robot reached the goal'
     FAILED = 'the navigation attempt ended unsuccessfully'
-
+    
 
 class NavigationEvent(Enum):
     START = 1
@@ -39,3 +32,17 @@ class NavigationEvent(Enum):
     GOAL_REACHED = 5
     MOVEMENT_FAILED = 6
     BUDGET_EXHAUSTED = 7
+
+
+class StoppingReason(Enum):
+    NO_PATH = 0
+    GOAL_REACHED = 'robot reaches the goal'
+    STEP_LIMIT = 'action budget expires before completion'
+    EXECUTION_FAILED = 'attempted movement fails'
+    
+    def toNavigationEvent(self) -> NavigationEvent:
+        match self:
+            case StoppingReason.NO_PATH: return NavigationEvent.NO_PATH
+            case StoppingReason.GOAL_REACHED: return NavigationEvent.GOAL_REACHED
+            case StoppingReason.STEP_LIMIT: return NavigationEvent.BUDGET_EXHAUSTED
+            case StoppingReason.EXECUTION_FAILED: return NavigationEvent.MOVEMENT_FAILED
