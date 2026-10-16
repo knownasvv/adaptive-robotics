@@ -13,16 +13,16 @@ def test_find_path():
 
     cases = [
         {
-            "start": (1, 1),
-            "goal": (3, 1),
-            "obstacles": {(2, 1)},
-            "expected_return": [(1, 1), (1, 0), (2, 0), (3, 0), (3, 1)],
+            'start': (1, 1),
+            'goal': (3, 1),
+            'obstacles': {(2, 1)},
+            'expected_return': [(1, 1), (1, 0), (2, 0), (3, 0), (3, 1)],
         },
         {
             'start': (1, 1),
             'goal': (1, 1),
-            "obstacles": set(),
-            "expected_return": [(1, 1)],
+            'obstacles': set(),
+            'expected_return': [(1, 1)],
         },
         {
             'start': (1, 1),
@@ -146,46 +146,46 @@ def test_choose_action():
     grid = (4, 3)
     cases = [
         {
-            "start": (0, 0),
-            "goal": (3, 2),
-            "obstacles": set(),
-            "expected_step_count": 5,
-            "expected_stopping_reason": StoppingReason.GOAL_REACHED,
-            "final_position": (3, 2),
-            "step_count_budget": 5,
+            'start': (0, 0),
+            'goal': (3, 2),
+            'obstacles': set(),
+            'expected_step_count': 5,
+            'expected_stopping_reason': StoppingReason.GOAL_REACHED,
+            'final_position': (3, 2),
+            'step_count_budget': 5,
         },
         {
-            "start": (0, 0),
-            "goal": (3, 2),
-            "obstacles": set(),
-            "expected_step_count": 4,
-            "expected_stopping_reason": StoppingReason.STEP_LIMIT,
-            "final_position": (3, 1),
-            "step_count_budget": 4,
+            'start': (0, 0),
+            'goal': (3, 2),
+            'obstacles': set(),
+            'expected_step_count': 4,
+            'expected_stopping_reason': StoppingReason.STEP_LIMIT,
+            'final_position': (3, 1),
+            'step_count_budget': 4,
         },
         {
-            "start": (3, 2),
-            "goal": (3, 2),
-            "obstacles": set(),
-            "expected_step_count": 0,
-            "expected_stopping_reason": StoppingReason.GOAL_REACHED,
-            "final_position": (3, 2),
+            'start': (3, 2),
+            'goal': (3, 2),
+            'obstacles': set(),
+            'expected_step_count': 0,
+            'expected_stopping_reason': StoppingReason.GOAL_REACHED,
+            'final_position': (3, 2),
         },
         {
-            "start": (1, 1),
-            "goal": (3, 1),
-            "obstacles": {(2, 1)},
-            "expected_step_count": 10,
-            "expected_stopping_reason": StoppingReason.STEP_LIMIT,
-            "final_position": (1, 1),
+            'start': (1, 1),
+            'goal': (3, 1),
+            'obstacles': {(2, 1)},
+            'expected_step_count': 10,
+            'expected_stopping_reason': StoppingReason.STEP_LIMIT,
+            'final_position': (1, 1),
         },
         {
-            "start": (3, 2),
-            "goal": (0, 0),
-            "obstacles": set(),
-            "expected_step_count": 5,
-            "expected_stopping_reason": StoppingReason.GOAL_REACHED,
-            "final_position": (0, 0),
+            'start': (3, 2),
+            'goal': (0, 0),
+            'obstacles': set(),
+            'expected_step_count': 5,
+            'expected_stopping_reason': StoppingReason.GOAL_REACHED,
+            'final_position': (0, 0),
         },
     ]
 
@@ -238,7 +238,7 @@ def test_action_between():
         print(f'\n----- Case {index} -----')
         
         actual = action_between(current, target)
-        assert actual == expected, (f"{current} -> {target}: expected {expected}, got {actual}")
+        assert actual == expected, (f'{current} -> {target}: expected {expected}, got {actual}')
 
     invalid_cases = [
         ((1, 1), (1, 1)),  # No movement
@@ -253,7 +253,7 @@ def test_action_between():
         except ValueError:
             pass
         else:
-            raise AssertionError(f"Expected ValueError for {current} -> {target}")
+            raise AssertionError(f'Expected ValueError for {current} -> {target}')
         
 def test_execute_path():
     print(f'\n================= test_execute_path() =================')
@@ -262,66 +262,66 @@ def test_execute_path():
 
     cases = [
         {
-            "name": "reach goal exactly at budget",
-            "path": detour,
-            "obstacles": {(2, 1)},
-            "budget": 4,
-            "position": (3, 1),
-            "ticks": 4,
-            "reason": StoppingReason.GOAL_REACHED,
+            'name': 'reach goal exactly at budget',
+            'path': detour,
+            'obstacles': {(2, 1)},
+            'budget': 4,
+            'position': (3, 1),
+            'ticks': 4,
+            'reason': StoppingReason.GOAL_REACHED,
         },
         {
-            "name": "budget expires before arrival",
-            "path": detour,
-            "obstacles": {(2, 1)},
-            "budget": 3,
-            "position": (3, 0),
-            "ticks": 3,
-            "reason": StoppingReason.STEP_LIMIT,
+            'name': 'budget expires before arrival',
+            'path': detour,
+            'obstacles': {(2, 1)},
+            'budget': 3,
+            'position': (3, 0),
+            'ticks': 3,
+            'reason': StoppingReason.STEP_LIMIT,
         },
         {
-            "name": "already at goal with zero budget",
-            "path": [(1, 1)],
-            "obstacles": set(),
-            "budget": 0,
-            "position": (1, 1),
-            "ticks": 0,
-            "reason": StoppingReason.GOAL_REACHED,
+            'name': 'already at goal with zero budget',
+            'path': [(1, 1)],
+            'obstacles': set(),
+            'budget': 0,
+            'position': (1, 1),
+            'ticks': 0,
+            'reason': StoppingReason.GOAL_REACHED,
         },
         {
-            "name": "zero budget with movement remaining",
-            "path": detour,
-            "obstacles": {(2, 1)},
-            "budget": 0,
-            "position": (1, 1),
-            "ticks": 0,
-            "reason": StoppingReason.STEP_LIMIT,
+            'name': 'zero budget with movement remaining',
+            'path': detour,
+            'obstacles': {(2, 1)},
+            'budget': 0,
+            'position': (1, 1),
+            'ticks': 0,
+            'reason': StoppingReason.STEP_LIMIT,
         },
         {
-            "name": "new obstacle blocks second movement",
-            "path": detour,
-            "obstacles": {(2, 1), (2, 0)},
-            "budget": 4,
-            "position": (1, 0),
-            "ticks": 2,
-            "reason": StoppingReason.EXECUTION_FAILED,
+            'name': 'new obstacle blocks second movement',
+            'path': detour,
+            'obstacles': {(2, 1), (2, 0)},
+            'budget': 4,
+            'position': (1, 0),
+            'ticks': 2,
+            'reason': StoppingReason.EXECUTION_FAILED,
         },
         {
-            "name": "failure on final permitted action",
-            "path": detour,
-            "obstacles": {(2, 1), (2, 0)},
-            "budget": 2,
-            "position": (1, 0),
-            "ticks": 2,
-            "reason": StoppingReason.EXECUTION_FAILED,
+            'name': 'failure on final permitted action',
+            'path': detour,
+            'obstacles': {(2, 1), (2, 0)},
+            'budget': 2,
+            'position': (1, 0),
+            'ticks': 2,
+            'reason': StoppingReason.EXECUTION_FAILED,
         },
     ]
 
     for index, case in enumerate(cases):
-        name = case["name"]
+        name = case['name']
         print(f'\n----- Case {index}: {name} -----')
-        path = case["path"].copy()
-        obstacles = case["obstacles"].copy()
+        path = case['path'].copy()
+        obstacles = case['obstacles'].copy()
         original_path = path.copy()
         original_obstacles = obstacles.copy()
 
@@ -329,12 +329,12 @@ def test_execute_path():
             grid=grid,
             obstacles=obstacles,
             path=path,
-            action_budget=case["budget"],
+            action_budget=case['budget'],
         )
 
-        assert result.position == case["position"], result
-        assert result.executed_count == case["ticks"], result
-        assert result.stopping_reason == case["reason"], result
+        assert result.position == case['position'], result
+        assert result.executed_count == case['ticks'], result
+        assert result.stopping_reason == case['reason'], result
 
         assert path == original_path, result
         assert obstacles == original_obstacles, result
@@ -359,8 +359,8 @@ def test_navigate():
             'expected_result': PathExecutionOutput((3, 1), 4, StoppingReason.GOAL_REACHED)
         }, {
             'name': 'incomplete detour',
-            'start': (0, 0),
-            'goal': (3, 2),
+            'start': (1, 1),
+            'goal': (3, 1),
             'obstacles': {(2, 1)},
             'budget': 3,
             'expected_result': PathExecutionOutput((3, 0), 3, StoppingReason.STEP_LIMIT)
@@ -370,31 +370,32 @@ def test_navigate():
             'goal': (1, 1),
             'obstacles': set(),
             'budget': 0,
-            'expected_result': PathExecutionOutput((3, 2), 5, StoppingReason.GOAL_REACHED)
-        }, {
+            'expected_result': PathExecutionOutput((1, 1), 0, StoppingReason.GOAL_REACHED)
+        },
+        {
             'name': 'no movement budget',
             'start': (1, 1),
             'goal': (3, 1),
             'obstacles': {(2, 1)},
             'budget': 0,
-            'expected_result': PathExecutionOutput((3, 2), 5, StoppingReason.STEP_LIMIT)
+            'expected_result': PathExecutionOutput((1, 1), 0, StoppingReason.STEP_LIMIT)
         }, {
             'name': 'enclosed start',
             'start': (1, 1),
             'goal': (3, 1),
             'obstacles': {(1, 0), (1, 2), (0, 1), (2, 1)},
             'budget': 10,
-            'expected_result': PathExecutionOutput((3, 2), 5, StoppingReason.NO_PATH)
-        }, 
+            'expected_result': PathExecutionOutput((1, 1), 0, StoppingReason.NO_PATH)
+        }
     ]
     
     for index, case in enumerate(cases):
-        name = case["name"]
+        name = case['name']
         print(f'\n----- Case {index}: {name} -----')
         
-        start = case["start"]
+        start = case['start']
         goal = case['goal']
-        obstacles = case["obstacles"]
+        obstacles = case['obstacles']
         budget = case['budget']
         expected_result = case['expected_result']
         
