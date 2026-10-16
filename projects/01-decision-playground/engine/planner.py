@@ -5,6 +5,8 @@
 #   2. It lies inside the grid.
 #   3. It is not occupied.
 # * There are no diagonal connections
+import logging
+
 
 from collections import deque
 
@@ -66,7 +68,7 @@ def find_path(
         
         if current == goal:
             path = _reconstruct_path(came_from, goal)
-            print(f'  [find_path()] path found: {path}')
+            logging.debug(f'  [find_path()] path found: {path}')
             return path
         
         neighbors = get_neighbors(

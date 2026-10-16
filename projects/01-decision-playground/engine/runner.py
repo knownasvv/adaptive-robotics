@@ -1,4 +1,5 @@
 # Execute the selected route and inspect actual outcomes
+import logging
 
 from data.data_models import StepOutput, PathExecutionOutput
 from data.models import StepAction, StepOutcome, StoppingReason
@@ -82,7 +83,7 @@ def execute_path(
     execution_count = 0
     stopping_reason = StoppingReason.STEP_LIMIT
     while next_index < len(path) and execution_count < action_budget:
-        print(f'Tick {execution_count}')
+        logging.debug(f'Tick {execution_count}')
         next_position = path[next_index]
         action = action_between(
             current_position=current_position,
@@ -94,7 +95,7 @@ def execute_path(
             current_position=current_position,
             action=action
         )
-        print(f'  action: {action}, step_outcome: {step_outcome}')
+        logging.debug(f'  action: {action}, step_outcome: {step_outcome}')
         execution_count += 1
         current_position = step_outcome.position
         

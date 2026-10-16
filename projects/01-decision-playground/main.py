@@ -1,12 +1,7 @@
-from test_cases import (
-    test_step, 
-    test_choose_action, 
-    test_get_neighbors, 
-    test_find_path,
-    test_action_between,
-    test_execute_path,
-    test_navigate
-)
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 
 if __name__ == '__main__':
 
@@ -16,11 +11,4 @@ if __name__ == '__main__':
     # y = 0 │ . . . .
     # y = 1 │ . R # .
     # y = 2 │ . . . .
-    
-    test_step()
-    test_choose_action()
-    test_get_neighbors()
-    test_find_path()
-    test_action_between()
-    test_execute_path()
-    test_navigate()
+    raise NotImplementedError
