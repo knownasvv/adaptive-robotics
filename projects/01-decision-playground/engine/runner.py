@@ -1,7 +1,7 @@
 # Execute the selected route and inspect actual outcomes
 
-from data.data_models import StepOutput
-from data.models import StepAction, StepOutcome
+from data.data_models import StepOutput, PathExecutionOutput
+from data.models import StepAction, StepOutcome, StoppingReason
 
 def _get_outcome(grid: tuple[int, int], obstacles: set[tuple[int, int]], position: tuple[int, int], action: StepAction) -> StepOutcome:
     if action == StepAction.WAIT:
@@ -27,14 +27,11 @@ def step(
 ) -> StepOutput:
     candidate_position = current_position
     x, y = candidate_position
-    if action == StepAction.UP:
-        candidate_position = (x, y - 1)
-    elif action == StepAction.DOWN:
-        candidate_position = (x, y + 1)
-    elif action == StepAction.LEFT:
-        candidate_position = (x - 1, y)
-    elif action == StepAction.RIGHT:
-        candidate_position = (x + 1, y)
+    match action:
+        case StepAction.UP: candidate_position = (x, y - 1)
+        case StepAction.DOWN: candidate_position = (x, y + 1)
+        case StepAction.LEFT: candidate_position = (x - 1, y)
+        case StepAction.RIGHT: candidate_position = (x + 1, y)
 
     outcome = _get_outcome(grid, obstacles, candidate_position, action)
     if outcome in [StepOutcome.OUT_OF_BOUNDS, StepOutcome.BLOCKED]:
@@ -49,12 +46,67 @@ def choose_action(
 ) -> StepAction:
     x, y = current_position
     goal_x, goal_y = goal
-    if x < goal_x:
-        return StepAction.RIGHT
-    elif x > goal_x:
-        return StepAction.LEFT
-    elif y < goal_y:
-        return StepAction.DOWN
-    elif y > goal_y:
-        return StepAction.UP
+    match True:
+        case _ if x < goal_x: return StepAction.RIGHT
+        case _ if x > goal_x: return StepAction.LEFT
+        case _ if y < goal_y: return StepAction.DOWN
+        case _ if y > goal_y: return StepAction.UP
     return StepAction.WAIT
+
+
+# Return the action connecting two adjacent cells
+def action_between(
+    current_position: tuple[int, int],
+    next_position: tuple[int, int],
+) -> StepAction:
+    position_delta = tuple(a - b for a, b in zip(current_position, next_position))
+    match position_delta:
+        case (0, 1):  return StepAction.UP
+        case (0, -1): return StepAction.DOWN
+        case (1, 0):  return StepAction.LEFT
+        case (-1, 0): return StepAction.RIGHT
+        case _: raise ValueError
+
+def execute_path(
+    grid: tuple[int, int],
+    obstacles: set[tuple[int, int]],
+    path: list[tuple[int, int]],
+    action_budget: int,
+) -> PathExecutionOutput:
+    current_position = path[0]
+    next_index = 1
+    
+    execution_count = 0
+    stopping_reason = StoppingReason.STEP_LIMIT
+    while next_index < len(path) and execution_count < action_budget:
+        print(f'Tick {execution_count}')
+        next_position = path[next_index]
+        action = action_between(
+            current_position=current_position,
+            next_position=next_position
+        )
+        step_outcome = step(
+            grid=grid,
+            obstacles=obstacles,
+            current_position=current_position,
+            action=action
+        )
+        print(f'  action: {action}, step_outcome: {step_outcome}')
+        execution_count += 1
+        current_position = step_outcome.position
+        
+        if step_outcome.outcome != StepOutcome.MOVED:
+            stopping_reason = StoppingReason.EXECUTION_FAILED
+            break 
+
+        if step_outcome.position == next_position:
+            next_index += 1
+        
+    if next_index == len(path):
+        stopping_reason = StoppingReason.GOAL_REACHED
+            
+    return PathExecutionOutput(
+        position=current_position,
+        executed_count=execution_count,
+        stopping_reason=stopping_reason
+    )
