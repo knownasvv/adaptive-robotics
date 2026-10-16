@@ -5,63 +5,65 @@ from engine.navigation import transition
 
 
 @pytest.mark.parametrize(
-    "initial_state, events, final_state",
+    "initial_state, expected_transitions",
     [
         pytest.param(
             NavigationState.IDLE,
             [
-                NavigationEvent.START,
-                NavigationEvent.PATH_FOUND,
-                NavigationEvent.GOAL_REACHED
+                (NavigationEvent.START, NavigationState.PLANNING),
+                (NavigationEvent.PATH_FOUND, NavigationState.EXECUTING),
+                (NavigationEvent.GOAL_REACHED, NavigationState.SUCCEEDED),
             ],
-            NavigationState.SUCCEEDED,
             id="successful navigation",
         ),
         pytest.param(
             NavigationState.IDLE,
             [
-                NavigationEvent.START,
-                NavigationEvent.NO_PATH
+                (NavigationEvent.START, NavigationState.PLANNING),
+                (NavigationEvent.NO_PATH, NavigationState.FAILED),
             ],
-            NavigationState.FAILED,
-            id="no route"
+            id="no route",
         ),
         pytest.param(
             NavigationState.IDLE,
             [
-                NavigationEvent.START,
-                NavigationEvent.ALREADY_AT_GOAL
+                (NavigationEvent.START, NavigationState.PLANNING),
+                (NavigationEvent.ALREADY_AT_GOAL, NavigationState.SUCCEEDED),
             ],
-            NavigationState.SUCCEEDED,
-            id='already at goal'
+            id="already at goal",
         ),
         pytest.param(
             NavigationState.IDLE,
             [
-                NavigationEvent.START,
-                NavigationEvent.PATH_FOUND,
-                NavigationEvent.MOVEMENT_FAILED
+                (NavigationEvent.START, NavigationState.PLANNING),
+                (NavigationEvent.PATH_FOUND, NavigationState.EXECUTING),
+                (NavigationEvent.MOVEMENT_FAILED, NavigationState.FAILED),
             ],
-            NavigationState.FAILED,
-            id='movement failure'
+            id="movement failure",
         ),
         pytest.param(
             NavigationState.IDLE,
             [
-                NavigationEvent.START,
-                NavigationEvent.PATH_FOUND,
-                NavigationEvent.BUDGET_EXHAUSTED
+                (NavigationEvent.START, NavigationState.PLANNING),
+                (NavigationEvent.PATH_FOUND, NavigationState.EXECUTING),
+                (NavigationEvent.BUDGET_EXHAUSTED, NavigationState.FAILED),
             ],
-            NavigationState.FAILED,
-            id='budget exhausted'
+            id="budget exhausted",
         ),
     ],
 )
-def test_transition(initial_state, events, final_state):
-    actual_state = initial_state
-    for event in events:
-        actual_state = transition(actual_state, event)
-    assert actual_state == final_state
+def test_transition(initial_state, expected_transitions):
+    current_state = initial_state
+
+    for event, expected_state in expected_transitions:
+        next_state = transition(current_state, event)
+
+        assert next_state == expected_state, (
+            f"{current_state.name} + {event.name}: "
+            f"expected {expected_state.name}, got {next_state.name}"
+        )
+
+        current_state = next_state
 
 @pytest.mark.parametrize(
     "state, event",
