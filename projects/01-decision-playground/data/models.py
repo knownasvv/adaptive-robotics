@@ -17,5 +17,7 @@ class StepOutcome(Enum):
  
  
 class StoppingReason(Enum):
-    GOAL_REACHED = 1
-    STEP_LIMIT = 2
+    NO_PATH = 0
+    GOAL_REACHED = 1 # robot reaches the goal
+    STEP_LIMIT = 2 # action budget expires before completion
+    EXECUTION_FAILED = 3 # attempted movement fails

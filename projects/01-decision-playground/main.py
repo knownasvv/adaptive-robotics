@@ -3,7 +3,8 @@ from test_cases import (
     test_choose_action, 
     test_get_neighbors, 
     test_find_path,
-    test_action_between
+    test_action_between,
+    test_execute_path
 )
 
 if __name__ == '__main__':
@@ -20,3 +21,4 @@ if __name__ == '__main__':
     test_get_neighbors()
     test_find_path()
     test_action_between()
+    test_execute_path()

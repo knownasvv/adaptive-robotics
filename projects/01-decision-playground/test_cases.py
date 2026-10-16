@@ -2,7 +2,7 @@ from data.data_models import StepOutput
 from data.models import StepAction, StepOutcome, StoppingReason
 
 from engine.planner import get_neighbors, find_path
-from engine.runner import step, choose_action, action_between
+from engine.runner import step, choose_action, action_between, execute_path
 
 
 # planner
@@ -226,35 +226,113 @@ def test_choose_action():
 
 def test_action_between():
     print(f'\n================= test_action_between() =================')
+    
+    cases = [
+        ((1, 1), (1, 0), StepAction.UP),
+        ((1, 1), (1, 2), StepAction.DOWN),
+        ((1, 1), (0, 1), StepAction.LEFT),
+        ((1, 1), (2, 1), StepAction.RIGHT),
+    ]
+
+    for index, (current, target, expected) in enumerate(cases):
+        print(f'\n----- Case {index} -----')
+        
+        actual = action_between(current, target)
+        assert actual == expected, (f"{current} -> {target}: expected {expected}, got {actual}")
+
+    invalid_cases = [
+        ((1, 1), (1, 1)),  # No movement
+        ((1, 1), (2, 2)),  # Diagonal movement
+        ((1, 1), (3, 1)),  # More than one cell
+    ]
+
+    for index, (current, target) in enumerate(invalid_cases):
+        print(f'\n----- Invalid Case {index} -----')
+        try:
+            action_between(current, target)
+        except ValueError:
+            pass
+        
+def test_execute_path():
+    print(f'\n================= test_execute_path() =================')
+    grid = (4, 3)
+    detour = [(1, 1), (1, 0), (2, 0), (3, 0), (3, 1)]
+
     cases = [
         {
-            'current_position': (1, 1), 
-            'next_position': (1, 0),
-            'expected_action': StepAction.UP
-        }, {
-            'current_position': (1, 0), 
-            'next_position': (2, 0),
-            'expected_action': StepAction.RIGHT
-        }, {
-            'current_position': (2, 0), 
-            'next_position': (3, 0),
-            'expected_action': StepAction.RIGHT
-        }, {
-            'current_position': (3, 0), 
-            'next_position': (3, 1),
-            'expected_action': StepAction.DOWN
+            "name": "reach goal exactly at budget",
+            "path": detour,
+            "obstacles": {(2, 1)},
+            "budget": 4,
+            "position": (3, 1),
+            "ticks": 4,
+            "reason": StoppingReason.GOAL_REACHED,
+        },
+        {
+            "name": "budget expires before arrival",
+            "path": detour,
+            "obstacles": {(2, 1)},
+            "budget": 3,
+            "position": (3, 0),
+            "ticks": 3,
+            "reason": StoppingReason.STEP_LIMIT,
+        },
+        {
+            "name": "already at goal with zero budget",
+            "path": [(1, 1)],
+            "obstacles": set(),
+            "budget": 0,
+            "position": (1, 1),
+            "ticks": 0,
+            "reason": StoppingReason.GOAL_REACHED,
+        },
+        {
+            "name": "zero budget with movement remaining",
+            "path": detour,
+            "obstacles": {(2, 1)},
+            "budget": 0,
+            "position": (1, 1),
+            "ticks": 0,
+            "reason": StoppingReason.STEP_LIMIT,
+        },
+        {
+            "name": "new obstacle blocks second movement",
+            "path": detour,
+            "obstacles": {(2, 1), (2, 0)},
+            "budget": 4,
+            "position": (1, 0),
+            "ticks": 2,
+            "reason": StoppingReason.EXECUTION_FAILED,
+        },
+        {
+            "name": "failure on final permitted action",
+            "path": detour,
+            "obstacles": {(2, 1), (2, 0)},
+            "budget": 2,
+            "position": (1, 0),
+            "ticks": 2,
+            "reason": StoppingReason.EXECUTION_FAILED,
         },
     ]
-    
-    for index, case in enumerate(cases):
-        print(f'\n----- Case {index} -----')
-        current_position = case['current_position']
-        next_position = case['next_position']
-        expected_action = case['expected_action']
-        
-        action = action_between(
-            current_position=current_position,
-            next_position=next_position
+
+    for case in cases:
+        name = case["name"]
+        print(f'\n----- Case: {name} -----')
+        path = case["path"].copy()
+        obstacles = case["obstacles"].copy()
+        original_path = path.copy()
+        original_obstacles = obstacles.copy()
+
+        result = execute_path(
+            grid=grid,
+            obstacles=obstacles,
+            path=path,
+            action_budget=case["budget"],
         )
-        print(f'  action: {action}')
-        assert action == expected_action
+
+        assert result.position == case["position"], result
+        assert result.executed_count == case["ticks"], result
+        assert result.stopping_reason == case["reason"], result
+
+        assert path == original_path, result
+        assert obstacles == original_obstacles, result

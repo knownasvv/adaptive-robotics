@@ -1,7 +1,7 @@
 # Execute the selected route and inspect actual outcomes
 
-from data.data_models import StepOutput
-from data.models import StepAction, StepOutcome
+from data.data_models import StepOutput, PathExecutionOutput
+from data.models import StepAction, StepOutcome, StoppingReason
 
 def _get_outcome(grid: tuple[int, int], obstacles: set[tuple[int, int]], position: tuple[int, int], action: StepAction) -> StepOutcome:
     if action == StepAction.WAIT:
@@ -58,11 +58,58 @@ def choose_action(
 def action_between(
     current_position: tuple[int, int],
     next_position: tuple[int, int],
-) -> StepAction:
+) -> StepAction | None:
     position_delta = tuple(a - b for a, b in zip(current_position, next_position))
     match position_delta:
         case (0, 1):  return StepAction.UP
         case (0, -1): return StepAction.DOWN
         case (1, 0):  return StepAction.LEFT
         case (-1, 0): return StepAction.RIGHT
-    return StepAction.WAIT
+        case _: return None
+
+def execute_path(
+    grid: tuple[int, int],
+    obstacles: tuple[int, int],
+    path: list[tuple[int, int]],
+    action_budget: int,
+) -> PathExecutionOutput:
+    _path = path.copy()
+    current_position = _path[0]
+    
+    execution_count = 0
+    stopping_reason = StoppingReason.STEP_LIMIT
+    while len(_path) > 0 and execution_count < action_budget:
+        print(f'Tick {execution_count}')
+        next_position = _path[1]
+        action = action_between(
+            current_position=current_position,
+            next_position=next_position
+        )
+        
+        print(f'  path: {_path}, current_position: {current_position}, next_position: {next_position}')    
+        
+        step_outcome = step(
+            grid=grid,
+            obstacles=obstacles,
+            current_position=current_position,
+            action=action
+        )
+        print(f'  action: {action}, step_outcome: {step_outcome}')
+        execution_count += 1
+        
+        if step_outcome.outcome != StepOutcome.MOVED:
+            stopping_reason = StoppingReason.EXECUTION_FAILED
+            break 
+
+        _path.pop(0)
+        current_position = next_position
+        
+    _path.pop(0)
+    if not _path:
+        stopping_reason = StoppingReason.GOAL_REACHED
+            
+    return PathExecutionOutput(
+        position=current_position,
+        executed_count=execution_count,
+        stopping_reason=stopping_reason
+    )
