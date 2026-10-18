@@ -79,6 +79,7 @@ def execute_path(
     path: list[tuple[int, int]],
     action_budget: int,
     obstacles_at: Callable[[int], set[tuple[int, int]]] | None = None,
+    start_tick: int = 0,
 ) -> PathExecutionOutput:
     current_position = path[0]
     next_index = 1
@@ -92,7 +93,7 @@ def execute_path(
             current_position=current_position,
             next_position=next_position
         )
-        current_obstacles = obstacles_at(execution_count) if obstacles_at is not None else obstacles
+        current_obstacles = obstacles_at(execution_count + start_tick) if obstacles_at is not None else obstacles
         step_outcome = step(
             grid=grid,
             obstacles=current_obstacles,
@@ -127,6 +128,7 @@ def navigate(
     goal: tuple[int, int],
     action_budget: int,
     obstacles_at: Callable[[int], set[tuple[int, int]]] | None = None,
+    start_tick: int = 0,
 ) -> NavigationOutput:
     current_state = NavigationState.IDLE
     state_history = [current_state]
@@ -174,7 +176,8 @@ def navigate(
         obstacles=obstacles,
         path=path,
         action_budget=action_budget,
-        obstacles_at=obstacles_at
+        obstacles_at=obstacles_at,
+        start_tick=start_tick
     )
     
     print(f'execution_output: {execution_output}')
