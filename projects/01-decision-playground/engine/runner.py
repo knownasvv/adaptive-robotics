@@ -128,6 +128,7 @@ def navigate(
     goal: tuple[int, int],
     action_budget: int,
     obstacles_at: Callable[[int], set[tuple[int, int]]] | None = None,
+    start_tick: int = 0,
 ) -> NavigationOutput:
     current_state = NavigationState.IDLE
     state_history = [current_state]
@@ -175,7 +176,8 @@ def navigate(
         obstacles=obstacles,
         path=path,
         action_budget=action_budget,
-        obstacles_at=obstacles_at
+        obstacles_at=obstacles_at,
+        start_tick=start_tick
     )
     
     print(f'execution_output: {execution_output}')

@@ -3,8 +3,8 @@
 import pytest
 
 from data.data_models import PathExecutionOutput
-from data.models import StoppingReason
-from engine.runner import execute_path
+from data.models import NavigationState, StoppingReason
+from engine.runner import execute_path, navigate
 
 
 @pytest.mark.parametrize(
@@ -118,3 +118,36 @@ def test_two_execution_calls_share_time_and_budget():
     assert second == PathExecutionOutput((3, 1), 3, StoppingReason.GOAL_REACHED)
     assert observed_ticks == [0, 1, 2, 3, 4]
     assert initial_budget - first.executed_count - second.executed_count == 3
+
+
+def test_navigate_forwards_start_tick_without_consuming_budget():
+    # Only current/future snapshots exist: querying tick zero must fail.
+    snapshots = {2: set(), 3: set()}
+    observed_ticks = []
+
+    def obstacles_at(tick):
+        observed_ticks.append(tick)
+        return snapshots[tick].copy()
+
+    result = navigate(
+        grid=(4, 3),
+        obstacles=set(),
+        start=(1, 0),
+        goal=(3, 0),
+        action_budget=2,
+        obstacles_at=obstacles_at,
+        start_tick=2,
+    )
+
+    assert observed_ticks == [2, 3]
+    assert result.execution == PathExecutionOutput(
+        position=(3, 0),
+        executed_count=2,
+        stopping_reason=StoppingReason.GOAL_REACHED,
+    )
+    assert result.state_history == [
+        NavigationState.IDLE,
+        NavigationState.PLANNING,
+        NavigationState.EXECUTING,
+        NavigationState.SUCCEEDED,
+    ]
